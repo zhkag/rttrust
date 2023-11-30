@@ -1,0 +1,26 @@
+[package]
+name = "rt-spark"
+version = "0.1.0"
+edition = "2021"
+build = "build.rs"
+readme = "README.md"
+authors = ["zhangkang <zhangkang@rt-thread.com>"]
+
+[[bin]]
+name = "rtthread"
+path = "applications/main.rs"
+
+[dependencies]
+embedded-hal = "*"
+nb = "*"
+cortex-m = "*"
+cortex-m-rt = "*"
+# Panic behaviour, see https://crates.io/keywords/panic-impl for alternatives
+panic-halt = "*"
+kernel = { path = "../../.." }
+
+[dependencies.stm32f4xx-hal]
+version = "*"
+features = ["rt", "stm32f407"] # replace the model of your microcontroller here
+
+
