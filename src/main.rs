@@ -4,6 +4,8 @@
 mod global_asm;
 mod context;
 mod cpuport;
+mod hw;
+mod thread;
 
 use core::panic::PanicInfo;
 
@@ -12,98 +14,21 @@ fn panic(_info: &PanicInfo) -> ! {
     loop {}
 }
 
+fn main_fun(_parameter:*mut ()) {
+    loop {}
+}
 
-use stm32f4xx_hal as hal;
+const MAIN_THREAD_STACK_SIZE: usize = 1024;
+static mut MAIN_THREAD_STACK: [u8; MAIN_THREAD_STACK_SIZE] = [0; MAIN_THREAD_STACK_SIZE];
 
-use crate::hal::{pac, prelude::*};
-
-use core::fmt::Write; // for pretty formatting of the serial output
 
 #[no_mangle]
 fn entry() {
-
-    let dp = pac::Peripherals::take().unwrap();
-
-    let gpioa = dp.GPIOA.split();
-
-    let rcc = dp.RCC.constrain();
-
-    let clocks = rcc.cfgr.use_hse(25.MHz()).freeze();
-
-    let mut delay = dp.TIM1.delay_ms(&clocks);
-
-    // define RX/TX pins
-    let tx_pin = gpioa.pa9;
-
-    // configure serial
-    // let mut tx = Serial::tx(dp.USART1, tx_pin, 9600.bps(), &clocks).unwrap();
-    // or
-    let mut tx = dp.USART1.tx(tx_pin, 9600.bps(), &clocks).unwrap();
-
-    let mut value: u8 = 0;
-
-    loop {
-        // print some value every 500 ms, value will overflow after 255
-        writeln!(tx, "value: {value:02}\r").unwrap();
-        value = value.wrapping_add(1);
-        delay.delay(2.secs());
-    }
+    hw::HardWare::board_init();
+    let size:u32 = core::mem::size_of::<[u8; 1024]>().try_into().unwrap();
+    let main_thread = 
+        thread::Thread::new(main_fun, core::ptr::null_mut(), unsafe {MAIN_THREAD_STACK.as_mut_ptr() as *mut ()}, size);
     
-    let input: u32 = 0;
-    unsafe{context::rt_hw_context_switch_to(input);}
-
-    loop {
-    }
+    unsafe{context::rt_hw_context_switch_to(&mut main_thread.sp() as *mut *mut () as *mut ());};
 }
-
-
-// #[export_name = "entry"]
-// unsafe extern "C" fn entry() {
-//     let input: u32 = 0;
-//     context::rt_hw_context_switch_to(input);
-
-
-//     loop {
-//     }
-// }
-
-
-
-
-// #![no_main]
-// #![no_std]
-
-// use panic_halt as _;
-
-// use cortex_m_rt::entry;
-
-// #[entry]
-// fn main() -> ! {
-//     let dp = pac::Peripherals::take().unwrap();
-
-//     let gpioa = dp.GPIOA.split();
-
-//     let rcc = dp.RCC.constrain();
-
-//     let clocks = rcc.cfgr.use_hse(25.MHz()).freeze();
-
-//     let mut delay = dp.TIM1.delay_ms(&clocks);
-
-//     // define RX/TX pins
-//     let tx_pin = gpioa.pa9;
-
-//     // configure serial
-//     // let mut tx = Serial::tx(dp.USART1, tx_pin, 9600.bps(), &clocks).unwrap();
-//     // or
-//     let mut tx = dp.USART1.tx(tx_pin, 9600.bps(), &clocks).unwrap();
-
-//     let mut value: u8 = 0;
-
-//     loop {
-//         // print some value every 500 ms, value will overflow after 255
-//         writeln!(tx, "value: {value:02}\r").unwrap();
-//         value = value.wrapping_add(1);
-//         delay.delay(2.secs());
-//     }
-// }
 
