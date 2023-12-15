@@ -1,4 +1,5 @@
 use crate::hw::HardWare;
+use crate::schedule;
 
 pub struct Thread
 {
@@ -9,10 +10,9 @@ pub struct Thread
     stack_size:u32,
 }
 
-
 fn _thread_exit()
 {
-
+    schedule!();
 }
 
 
@@ -32,5 +32,8 @@ impl Thread {
     }
     pub fn sp(&self) ->*mut (){
         self.sp
+    }
+
+    pub fn startup(&self){
     }
 }
