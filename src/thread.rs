@@ -1,6 +1,8 @@
 use crate::hw::HardWare;
 use crate::schedule;
 
+
+#[derive(Copy)]
 pub struct Thread
 {
     sp: *mut (),
@@ -8,6 +10,18 @@ pub struct Thread
     parameter: *mut (),
     stack_addr: *mut (),
     stack_size:u32,
+}
+
+impl Clone for Thread {
+    fn clone(&self) -> Self {
+        Thread {
+            sp: self.sp,
+            entry:self.entry,
+            parameter: self.parameter,
+            stack_addr: self.stack_addr,
+            stack_size:self.stack_size,
+        }
+    }
 }
 
 fn _thread_exit()

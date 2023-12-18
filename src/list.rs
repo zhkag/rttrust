@@ -4,9 +4,19 @@ pub struct Node<T> {
     next: Option<*mut Node<T>>,
 }
 
+#[derive(Copy)]
 pub struct List<T> {
     head: Option<*mut Node<T>>,
     tail: Option<*mut Node<T>>,
+}
+
+impl<T> Clone for List<T> {
+    fn clone(&self) -> Self {
+        List {
+            head: self.head,
+            tail: self.tail,
+        }
+    }
 }
 
 impl<T> Node<T> {
