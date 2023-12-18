@@ -30,8 +30,8 @@ impl<T> Node<T> {
         self  
     }
 
-    pub fn value(&mut self) -> &mut Option<T>{
-        &mut self.value
+    pub fn value(self) -> Option<T>{
+        self.value
     }
 }
 
@@ -138,26 +138,49 @@ impl<T> List<T> {
         len
     }
     
-    pub fn iter(&self) -> LinkedListIterator<T> {
-        LinkedListIterator {
+    pub fn iter_value(&self) -> LinkedListIteratorValue<T> {
+        LinkedListIteratorValue {
+            current: self.head,
+        }
+    }
+
+    pub fn iter_node(&self) -> LinkedListIteratorNode<T> {
+        LinkedListIteratorNode {
             current: self.head,
         }
     }
 }
 
-pub struct LinkedListIterator<T> {
+pub struct LinkedListIteratorValue<T> {
     current: Option<*mut Node<T>>,
 }
 
-impl<T> Iterator for LinkedListIterator<T> {
+pub struct LinkedListIteratorNode<T> {
+    current: Option<*mut Node<T>>,
+}
+
+impl<T> Iterator for LinkedListIteratorValue<T> {
     type Item = T;
     fn next(&mut self) -> Option<Self::Item> {
         self.current.take().map(|node| {
             let node = unsafe { &mut *node };
             let next = node.next;
             self.current = next;
-            let value:T = unsafe { core::ptr::read((*node).value.as_ref().expect("REASON")) };
+            let value:Self::Item = unsafe { core::ptr::read((*node).value.as_ref().expect("REASON")) };
             value
+        })
+    }
+}
+
+impl<T> Iterator for LinkedListIteratorNode<T> {
+    type Item = Node<T>;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.current.take().map(|node| {
+            let node = unsafe { &mut *node };
+            let next = node.next;
+            self.current = next;
+            let next_node:Self::Item = unsafe { core::ptr::read(node) };
+            next_node
         })
     }
 }

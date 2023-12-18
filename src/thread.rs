@@ -1,5 +1,5 @@
 use crate::hw::HardWare;
-use crate::schedule;
+use crate::{scheduler,schedule};
 
 
 #[derive(Copy)]
@@ -48,6 +48,18 @@ impl Thread {
         self.sp
     }
 
-    pub fn startup(&self){
+    fn resume(&self){
+        scheduler!(insert_thread(*self));
     }
+
+    pub fn startup(&self){
+        self.resume();
+        if thread_self().is_some(){
+            schedule!();
+        }
+    }
+}
+
+pub fn thread_self() -> Option<Thread>{
+    scheduler!(current_thread())
 }
