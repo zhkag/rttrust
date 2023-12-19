@@ -1,125 +1,112 @@
-pub struct Node<T> {
-    value: Option<T>,
-    prev: Option<*mut Node<T>>,
-    next: Option<*mut Node<T>>,
-}
 
 #[derive(Copy)]
 pub struct List<T> {
-    head: Option<*mut Node<T>>,
-    tail: Option<*mut Node<T>>,
+    next: Option<*mut List<T>>,
+    prev: Option<*mut List<T>>,
 }
 
 impl<T> Clone for List<T> {
     fn clone(&self) -> Self {
         List {
-            head: self.head,
-            tail: self.tail,
+            next: self.next,
+            prev: self.prev,
         }
     }
 }
 
-impl<T> Node<T> {
+impl<T> List<T> {
 
-    pub fn static_init(static_self:&mut Option<Node<T>>) -> &mut Option<Node<T>>{
-        *static_self=Some(Node{value:None,prev:None,next:None});
+    pub fn static_init(static_self:&mut Option<List<T>>) -> &mut Option<List<T>>{
+        *static_self=Some(List{prev:None,next:None});
         static_self  
     }
-    pub fn set_value(&mut self,value:T) -> &mut Node<T>{
-        self.value = Some(value);
-        self  
-    }
 
-    pub fn value(self) -> Option<T>{
-        self.value
+    pub fn init() -> List<T>{
+        List{prev:None,next:None}
     }
 }
 
 impl<T> List<T> {
     pub fn new() -> Self {
         List {
-            head: None,
-            tail: None,
+            next: None,
+            prev: None,
         }
     }
     
-    pub fn push_front(&mut self, new_node: &mut Node<T>) {
-        let raw_node = new_node as *mut Node<T>;
-        if let Some(head) = self.head {
+    pub fn push_front(&mut self, new_node: &mut List<T>) {
+        let raw_node = new_node as *mut List<T>;
+        if let Some(next) = self.next {
             unsafe {
-                (*head).prev = Some(raw_node);
-                new_node.next = Some(head);
+                (*next).prev = Some(raw_node);
+                new_node.next = Some(next);
             }
         } else {
-            self.tail = Some(raw_node);
+            self.prev = Some(raw_node);
         }
-        self.head = Some(raw_node);
+        self.next = Some(raw_node);
     }
     
-    pub fn push_back(&mut self, new_node: &mut Node<T>) {
-        let raw_node = new_node as *mut Node<T>;
-        if let Some(tail) = self.tail {
+    pub fn push_back(&mut self, new_node: &mut List<T>) {
+        let raw_node = new_node as *mut List<T>;
+        if let Some(tail) = self.prev {
             unsafe {
                 (*tail).next = Some(raw_node);
                 new_node.prev = Some(tail);
             }
         } else {
-            self.head = Some(raw_node);
+            self.next = Some(raw_node);
         }
-        self.tail = Some(raw_node);
+        self.prev = Some(raw_node);
     }
-    pub fn pop_front(&mut self) -> Option<T> {
-        self.head.take().map(|head: *mut Node<T>| {
-            let head = unsafe { &mut *head };
-            if let Some(next) = head.next.as_mut() {
+    pub fn pop_front(&mut self) -> Option<*mut List<T>> {
+        self.next.take().map(|head: *mut List<T>| {
+            if let Some(next) = unsafe { &mut *head }.next.as_mut() {
                 unsafe {
                     (*(*next)).prev = None;
                 }
-                self.head = Some(*next);
+                self.next = Some(*next);
             } else {
-                self.tail = None;
+                self.prev = None;
             }
-            let value: T = unsafe { core::ptr::read((*head).value.as_ref().expect("REASON")) };
-            value
+            head
         })
     }
     
-    pub fn pop_back(&mut self) -> Option<T> {
-        self.tail.take().map(|tail: *mut Node<T>| {
-            let tail = unsafe { &mut *tail };
-            if let Some(prev) = tail.prev.as_mut() {
+    pub fn pop_back(&mut self) -> Option<*mut List<T>> {
+        self.prev.take().map(|tail: *mut List<T>| {
+            if let Some(prev) = unsafe { &mut *tail }.prev.as_mut() {
                 unsafe {
                     (*(*prev)).next = None;
                 }
-                self.tail = Some(*prev);
+                self.prev = Some(*prev);
             } else {
-                self.head = None;
+                self.next = None;
             }
-            let value: T = unsafe { core::ptr::read((*tail).value.as_ref().expect("REASON")) };
-            value
+            tail
         })
     }
     
-    pub fn remove(&mut self, node: &mut Node<T>) {
+    pub fn remove(&mut self, node: &mut List<T>) {
 
         if let Some(prev) = node.prev.as_mut() {
             unsafe {
                 (*(*prev)).next = node.next;
             }
         } else {
-            self.head = node.next;
+            self.next = node.next;
         }
         if let Some(next) = node.next.as_mut() {
             unsafe {
                 (*(*next)).prev = node.prev;
             }
         } else {
-            self.tail = node.prev;
+            self.prev = node.prev;
         }
     }
 
     pub fn isempty(&self) ->bool {
-        if self.head.is_none() && self.tail.is_none(){
+        if self.next.is_none() && self.prev.is_none(){
             return true;
         }
         false
@@ -127,7 +114,7 @@ impl<T> List<T> {
 
     pub fn len(&self) ->u8 {
         let mut len:u8 = 0;        
-        let mut current = self.head.as_ref();
+        let mut current = self.next.as_ref();
 
         while let Some(node) = current {
             len += 1;
@@ -138,83 +125,124 @@ impl<T> List<T> {
         len
     }
     
-    pub fn iter_value(&self) -> LinkedListIteratorValue<T> {
-        LinkedListIteratorValue {
-            current: self.head,
-        }
-    }
+    // pub fn iter_value(&self) -> LinkedListIteratorValue<T> {
+    //     LinkedListIteratorValue {
+    //         current: self.head,
+    //     }
+    // }
 
     pub fn iter_node(&self) -> LinkedListIteratorNode<T> {
         LinkedListIteratorNode {
-            current: self.head,
+            current: self.next,
         }
     }
 }
 
-pub struct LinkedListIteratorValue<T> {
-    current: Option<*mut Node<T>>,
-}
+// pub struct LinkedListIteratorValue<T> {
+//     current: Option<*mut List<T>>,
+// }
 
 pub struct LinkedListIteratorNode<T> {
-    current: Option<*mut Node<T>>,
+    current: Option<*mut List<T>>,
 }
 
-impl<T> Iterator for LinkedListIteratorValue<T> {
-    type Item = T;
-    fn next(&mut self) -> Option<Self::Item> {
-        self.current.take().map(|node| {
-            let node = unsafe { &mut *node };
-            let next = node.next;
-            self.current = next;
-            let value:Self::Item = unsafe { core::ptr::read((*node).value.as_ref().expect("REASON")) };
-            value
-        })
-    }
-}
-
-impl<T> Iterator for LinkedListIteratorNode<T> {
-    type Item = Node<T>;
-    fn next(&mut self) -> Option<Self::Item> {
-        self.current.take().map(|node| {
-            let node = unsafe { &mut *node };
-            let next = node.next;
-            self.current = next;
-            let next_node:Self::Item = unsafe { core::ptr::read(node) };
-            next_node
-        })
-    }
-}
-
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//     static mut TEST1: Option<Node<u8>> = None;
-//     static mut TEST2: Option<Node<u8>> = None;
-//     static mut TEST3: Option<Node<u8>> = None;
-//     #[test]
-//     fn test_count_nodes() {
-//         let mut list: List<u8> = List::new();
-//         let test1 = unsafe{Node::static_init(&mut TEST1)};
-//         let test2 = unsafe{Node::static_init(&mut TEST2)};
-//         let test3 = unsafe{Node::static_init(&mut TEST3)};
-//         test1.as_mut().expect("REASON").set_value(1);
-//         test2.as_mut().expect("REASON").set_value(2);
-//         test3.as_mut().expect("REASON").set_value(3);
-//         list.push_front(test1.as_mut().expect("REASON"));
-//         list.push_front(test2.as_mut().expect("REASON"));
-//         list.push_front(test3.as_mut().expect("REASON"));
-        
-//         let mut _len = list.len();
-//         list.remove(test3.as_mut().expect("REASON"));
-//         _len = list.len();
-//         let mut _value_sum = 0;
-//         for value in list.iter() {
-//             _value_sum += value;
-//         }
-        
-//         while let Some(value) = list.pop_front() { //pop_back  pop_front
-//             _value_sum += value;
-//         }
-//         let _isempty = list.isempty();
+// impl<T> Iterator for LinkedListIteratorValue<T> {
+//     type Item = T;
+//     fn next(&mut self) -> Option<Self::Item> {
+//         self.current.take().map(|node| {
+//             let node = unsafe { &mut *node };
+//             let next = node.next;
+//             self.current = next;
+//             let value:Self::Item = unsafe { core::ptr::read((*node).value.as_ref().expect("REASON")) };
+//             value
+//         })
 //     }
 // }
+
+impl<T> Iterator for LinkedListIteratorNode<T> {
+    type Item = *mut List<T>;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.current.take().map(|node| {
+            let next: Option<*mut List<T>> = unsafe { &mut *node }.next;
+            self.current = next;
+            node
+        })
+    }
+}
+
+
+
+// struct TestListU8
+// {
+//     value:u8,
+//     list:List<TestListU8>
+// }
+// impl TestListU8 {
+
+//     pub fn static_init(static_self:&mut Option<TestListU8>) -> &mut Option<TestListU8>{
+//         *static_self=Some(TestListU8{
+//             value:0,
+//             list:List::init()
+//         });
+//         static_self  
+//     }
+
+//     pub fn set_value(&mut self,value:u8) -> &mut TestListU8{
+//         self.value = value;
+//         self  
+//     }
+
+//     pub fn value(&self) -> &u8{
+//         &self.value
+//     }
+
+//     pub fn list(&mut self) -> &mut List<TestListU8> {
+//         &mut self.list
+//     }
+// }
+
+// static mut TEST1: Option<TestListU8> = None;
+// static mut TEST2: Option<TestListU8> = None;
+// static mut TEST3: Option<TestListU8> = None;
+
+// #[macro_export]
+// macro_rules! offset_of {
+//     ($node:ident, $type:ty, $member:ident) => {{
+//         unsafe { &mut *(($node as usize - (&(&*(0 as *const $type)).$member) as *const List<$type> as usize) as *mut $type) }
+//     }};
+// }
+
+// fn main() {
+//     let mut list: List<TestListU8> = List::new();
+//     let test1 = unsafe{TestListU8::static_init(&mut TEST1)};
+//     let test2 = unsafe{TestListU8::static_init(&mut TEST2)};
+//     let test3 = unsafe{TestListU8::static_init(&mut TEST3)};
+
+//     test1.as_mut().expect("REASON").set_value(1);
+//     test2.as_mut().expect("REASON").set_value(2);
+//     test3.as_mut().expect("REASON").set_value(3);
+//     test1.as_mut().expect("REASON").list();
+//     list.push_front(test1.as_mut().expect("REASON").list());
+//     list.push_front(test2.as_mut().expect("REASON").list());
+//     list.push_front(test3.as_mut().expect("REASON").list());
+    
+//     let mut _len = list.len();
+//     println!("_len : {}",_len);
+//     list.remove(test3.as_mut().expect("REASON").list());
+//     _len = list.len();
+//     println!("_len : {}",_len);
+//     let mut _value_sum = 0;
+//     for value in list.iter_node() {
+//         _value_sum += offset_of!(value,TestListU8,list).value();
+
+//         println!("_value_sum : {}",_value_sum);
+//     }
+    
+//     while let Some(value) = list.pop_front() { //pop_back  pop_front
+//         _value_sum += offset_of!(value,TestListU8,list).value();
+//         println!("_value_sum : {}",_value_sum);
+//     }
+//     let _isempty = list.isempty();
+//     println!("_isempty : {}",_isempty);
+// }
+

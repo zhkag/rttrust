@@ -1,7 +1,6 @@
 use crate::Thread;
 use crate::List;
 use crate::context;
-use crate::Node;
 
 const THREAD_PRIORITY_MAX: usize = 32;
 pub struct Scheduler{
@@ -43,21 +42,21 @@ impl Scheduler {
     pub fn init(&self) {
     }
 
-    fn get_highest_priority_thread(&self,highest_prio: &mut usize) -> Option<Node<Thread>> {
-        let highest_ready_priority:usize = self.ready_priority_group.trailing_zeros() as usize;
-        *highest_prio = highest_ready_priority;
-        self.priority_table[highest_ready_priority].iter_node().next()
-    }
+    // fn get_highest_priority_thread(&self,highest_prio: &mut usize) -> Option<List<Thread>> {
+    //     let highest_ready_priority:usize = self.ready_priority_group.trailing_zeros() as usize;
+    //     *highest_prio = highest_ready_priority;
+    //     self.priority_table[highest_ready_priority].iter_node().next()
+    // }
 
     pub fn start(&mut self) {
         let mut highest_ready_priority = 0;
-        if let Some(to_thread_node) = self.get_highest_priority_thread(&mut highest_ready_priority) {
-            let to_thread = to_thread_node.value().expect("REASON");
-            self.current_thread = Some(to_thread);
-            self.remove_thread(to_thread);
-            unsafe{context::rt_hw_context_switch_to(&mut to_thread.sp() as *mut *mut () as *mut ());};
-            unreachable!();
-        }
+        // if let Some(to_thread_node) = self.get_highest_priority_thread(&mut highest_ready_priority) {
+        //     let to_thread = to_thread_node.value().expect("REASON");
+        //     self.current_thread = Some(to_thread);
+        //     self.remove_thread(to_thread);
+        //     unsafe{context::rt_hw_context_switch_to(&mut to_thread.sp() as *mut *mut () as *mut ());};
+        //     unreachable!();
+        // }
         unreachable!();
     }
 }
