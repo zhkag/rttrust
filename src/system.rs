@@ -1,5 +1,7 @@
 use crate::scheduler::Scheduler;
 use crate::hw::HardWare;
+use crate::Thread;
+use crate::List;
 
 static mut SYSTREM: Option<System> = None;
 
@@ -45,12 +47,20 @@ impl System {
 #[macro_export]
 macro_rules! system {
     ($($tokens:tt)*) => {{
-        crate::system::System::global().$($tokens)*;
+        crate::system::System::global().$($tokens)*
     }};
 }
 
 #[macro_export]
+macro_rules! scheduler {
+    ($($tokens:tt)*) => {{
+        crate::system::System::global().scheduler().$($tokens)*
+    }};
+}
+
+
+#[macro_export]
 macro_rules! schedule {
-    ()=>{crate::system::System::global().scheduler().schedule();}
+    ()=>{crate::system::System::global().scheduler().schedule()};
 }
 
