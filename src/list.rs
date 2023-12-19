@@ -170,6 +170,13 @@ impl<T> Iterator for LinkedListIteratorNode<T> {
     }
 }
 
+#[macro_export]
+macro_rules! offset_of {
+    ($node:ident, $type:ty, $member:ident) => {{
+        unsafe { &mut *(($node as usize - (&(&*(0 as *const $type)).$member) as *const List<$type> as usize) as *mut $type) }
+    }};
+}
+
 
 
 // struct TestListU8
@@ -205,12 +212,6 @@ impl<T> Iterator for LinkedListIteratorNode<T> {
 // static mut TEST2: Option<TestListU8> = None;
 // static mut TEST3: Option<TestListU8> = None;
 
-// #[macro_export]
-// macro_rules! offset_of {
-//     ($node:ident, $type:ty, $member:ident) => {{
-//         unsafe { &mut *(($node as usize - (&(&*(0 as *const $type)).$member) as *const List<$type> as usize) as *mut $type) }
-//     }};
-// }
 
 // fn main() {
 //     let mut list: List<TestListU8> = List::new();

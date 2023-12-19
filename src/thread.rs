@@ -1,5 +1,6 @@
 use crate::hw::HardWare;
 use crate::{scheduler,schedule};
+use crate::List;
 
 
 #[derive(Copy)]
@@ -10,6 +11,7 @@ pub struct Thread
     parameter: *mut (),
     stack_addr: *mut (),
     stack_size:u32,
+    pub list:List<Thread>
 }
 
 impl Clone for Thread {
@@ -20,6 +22,7 @@ impl Clone for Thread {
             parameter: self.parameter,
             stack_addr: self.stack_addr,
             stack_size:self.stack_size,
+            list:self.list
         }
     }
 }
@@ -39,6 +42,7 @@ impl Thread {
             stack_addr:stack_start,
             stack_size,
             sp:core::ptr::null_mut(),
+            list:List::init()
         };
         let ptr = thread.stack_addr as u32;
         thread.sp = HardWare::stack_init(thread.entry, thread.parameter, (ptr+thread.stack_size-16)as *mut (), _thread_exit);
