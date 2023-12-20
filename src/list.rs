@@ -1,17 +1,8 @@
 
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct List<T> {
     next: Option<*mut List<T>>,
     prev: Option<*mut List<T>>,
-}
-
-impl<T> Clone for List<T> {
-    fn clone(&self) -> Self {
-        List {
-            next: self.next,
-            prev: self.prev,
-        }
-    }
 }
 
 impl<T> List<T> {
@@ -124,42 +115,19 @@ impl<T> List<T> {
         }
         len
     }
-    
-    // pub fn iter_value(&self) -> LinkedListIteratorValue<T> {
-    //     LinkedListIteratorValue {
-    //         current: self.head,
-    //     }
-    // }
 
-    pub fn iter_node(&self) -> LinkedListIteratorNode<T> {
-        LinkedListIteratorNode {
+    pub fn iter_mut(&self) -> LinkedListIteratorMut<T> {
+        LinkedListIteratorMut {
             current: self.next,
         }
     }
 }
 
-// pub struct LinkedListIteratorValue<T> {
-//     current: Option<*mut List<T>>,
-// }
-
-pub struct LinkedListIteratorNode<T> {
+pub struct LinkedListIteratorMut<T> {
     current: Option<*mut List<T>>,
 }
 
-// impl<T> Iterator for LinkedListIteratorValue<T> {
-//     type Item = T;
-//     fn next(&mut self) -> Option<Self::Item> {
-//         self.current.take().map(|node| {
-//             let node = unsafe { &mut *node };
-//             let next = node.next;
-//             self.current = next;
-//             let value:Self::Item = unsafe { core::ptr::read((*node).value.as_ref().expect("REASON")) };
-//             value
-//         })
-//     }
-// }
-
-impl<T> Iterator for LinkedListIteratorNode<T> {
+impl<T> Iterator for LinkedListIteratorMut<T> {
     type Item = *mut List<T>;
     fn next(&mut self) -> Option<Self::Item> {
         self.current.take().map(|node| {
@@ -171,13 +139,20 @@ impl<T> Iterator for LinkedListIteratorNode<T> {
 }
 
 #[macro_export]
-macro_rules! offset_of {
+macro_rules! offset_of_mut {
     ($node:ident, $type:ty, $member:ident) => {{
+        #[allow(deref_nullptr)]
         unsafe { &mut *(($node as usize - (&(&*(0 as *const $type)).$member) as *const List<$type> as usize) as *mut $type) }
     }};
 }
 
-
+#[macro_export]
+macro_rules! offset_of {
+    ($node:ident, $type:ty, $member:ident) => {{
+        #[allow(deref_nullptr)]
+        unsafe { *(($node as usize - (&(&*(0 as *const $type)).$member) as *const List<$type> as usize) as *mut $type) }
+    }};
+}
 
 // struct TestListU8
 // {
@@ -233,7 +208,7 @@ macro_rules! offset_of {
 //     _len = list.len();
 //     println!("_len : {}",_len);
 //     let mut _value_sum = 0;
-//     for value in list.iter_node() {
+//     for value in list.iter_mut() {
 //         _value_sum += offset_of!(value,TestListU8,list).value();
 
 //         println!("_value_sum : {}",_value_sum);
@@ -246,4 +221,3 @@ macro_rules! offset_of {
 //     let _isempty = list.isempty();
 //     println!("_isempty : {}",_isempty);
 // }
-
