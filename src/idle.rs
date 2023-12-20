@@ -10,10 +10,9 @@ fn idle_fun(_parameter: *mut ()) {
 static mut IDLE_THREAD:Option<Thread> = None;
 
 pub fn rt_thread_idle_init(){
-    let size:u32 = core::mem::size_of::<[u8; IDLE_THREAD_STACK_SIZE]>().try_into().unwrap();
+    let stack_size:u32 = core::mem::size_of::<[u8; IDLE_THREAD_STACK_SIZE]>().try_into().unwrap();
     let stack_start = unsafe {IDLE_THREAD_STACK.as_mut_ptr() as *mut ()};
-    let thread = unsafe {&mut IDLE_THREAD};
-    let idle_thread = Thread::new(idle_fun, core::ptr::null_mut(), stack_start, size, 31);
-    *thread = Some(idle_thread);
-    thread.as_mut().unwrap().startup();
+    let thread_static = unsafe {&mut IDLE_THREAD};
+    let idle_thread = Thread::init(thread_static,idle_fun, core::ptr::null_mut(), stack_start, stack_size, 31);
+    idle_thread.startup();
 }

@@ -26,7 +26,7 @@ fn _thread_exit()
 
 
 impl Thread {
-    pub fn new(entry: fn(*mut ()),parameter:*mut (),stack_start:*mut (),stack_size:u32,priority:u8) -> Thread {
+    fn new(entry: fn(*mut ()),parameter:*mut (),stack_start:*mut (),stack_size:u32,priority:u8) -> Thread {
         let mut thread = Thread {
             entry,
             parameter,
@@ -41,6 +41,10 @@ impl Thread {
         let ptr = thread.stack_addr as u32;
         thread.sp = HardWare::stack_init(thread.entry, thread.parameter, (ptr+thread.stack_size-16)as *mut (), _thread_exit);
         thread
+    }
+    pub fn init(thread: &mut Option<Thread>,entry: fn(*mut ()),parameter:*mut (),stack_start:*mut (),stack_size:u32,priority:u8) -> &mut Thread{
+        *thread = Some(Thread::new(entry, parameter, stack_start, stack_size, priority));
+        thread.as_mut().unwrap()
     }
 
     pub fn sp(&self) ->*mut (){
