@@ -1,5 +1,5 @@
-use crate::Thread;
-use crate::List;
+use crate::thread::{Thread,Status};
+use crate::list::List;
 use crate::context;
 use crate::{offset_of,offset_of_mut};
 
@@ -26,6 +26,13 @@ impl Scheduler {
     //     self.current_thread
     // }
     pub fn schedule(&self){ //rt_schedule
+        if self.ready_priority_group == 0
+        {
+            return;
+        }
+
+        let mut highest_ready_priority = 0;
+        let to_thread = self.get_highest_priority_thread_mut(&mut highest_ready_priority);
 
     }
     // pub fn hardware(&self)->&HardWare{
@@ -34,6 +41,10 @@ impl Scheduler {
 
     
     pub fn insert_thread(&mut self,thread:&mut Thread){
+        if thread == self.current_thread() {
+            thread.set_stat(Status::RUNNING|thread.stat() & !Status::STAT_MASK);
+            return;
+        }
         self.priority_table[thread.current_priority() as usize].push_front(&mut thread.list);
         self.ready_priority_group |= thread.number_mask() as usize;
     }
@@ -41,10 +52,15 @@ impl Scheduler {
         // thread.list.
         // self.ready_priority_group&= ~thread->number_mask
     }
-    pub fn current_thread(&mut self) ->Option<*mut Thread> {
-        self.current_thread
+
+    pub fn current_thread_is_some(&mut self) ->bool {
+        self.current_thread.is_some()
     }
-    pub fn set_current_thread(&mut self,thread:Option<*mut Thread>){
+
+    pub fn current_thread(&mut self) ->&mut Thread {
+        unsafe {&mut *(self.current_thread.unwrap())}
+    }
+    pub fn set_current_thread(&mut self, thread:Option<*mut Thread>){
         self.current_thread = thread;
     }
     pub fn init(&self) {
@@ -67,6 +83,7 @@ impl Scheduler {
         let mut highest_ready_priority = 0;
         let to_thread = self.get_highest_priority_thread_mut(&mut highest_ready_priority);
         let sp = &mut to_thread.sp();
+        to_thread.set_stat(Status::RUNNING);
         self.remove_thread(to_thread);
         self.set_current_thread(Some(to_thread));
         unsafe{context::rt_hw_context_switch_to(sp as *mut *mut () as *mut ());};
