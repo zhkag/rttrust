@@ -1,6 +1,7 @@
 
 use core::arch::asm;
 use crate::cpuport;
+use crate::tick;
 
 #[export_name = "rt_hw_context_switch_to"]
 pub unsafe extern "C" fn rt_hw_context_switch_to(input: *mut ()) {
@@ -44,7 +45,7 @@ pub unsafe extern "C" fn rt_hw_context_switch_to(input: *mut ()) {
 
 #[export_name = "SysTick_Handler"]
 unsafe extern "C" fn sys_tick_handler() {
-
+    tick!(increase());
 }
 
 

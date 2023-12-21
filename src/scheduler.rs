@@ -9,7 +9,7 @@ const THREAD_PRIORITY_MAX: usize = 32;
 pub struct Scheduler{
     priority_table:[List<Thread>;THREAD_PRIORITY_MAX],
     ready_priority_group:usize,
-    current_thread:Option<Thread>
+    current_thread:Option<*mut Thread>
 }
 
 impl Scheduler {
@@ -37,14 +37,15 @@ impl Scheduler {
         self.priority_table[thread.current_priority() as usize].push_front(&mut thread.list);
         self.ready_priority_group |= thread.number_mask() as usize;
     }
-    pub fn remove_thread(&self,thread:Thread){
-
+    pub fn remove_thread(&self,thread:&mut Thread){
         // thread.list.
         // self.ready_priority_group&= ~thread->number_mask
-
     }
-    pub fn current_thread(&self) ->Option<Thread> {
+    pub fn current_thread(&mut self) ->Option<*mut Thread> {
         self.current_thread
+    }
+    pub fn set_current_thread(&mut self,thread:Option<*mut Thread>){
+        self.current_thread = thread;
     }
     pub fn init(&self) {
     }
@@ -64,10 +65,11 @@ impl Scheduler {
 
     pub fn start(&mut self) {
         let mut highest_ready_priority = 0;
-        let to_thread = self.get_highest_priority_thread(&mut highest_ready_priority);
-        self.current_thread = Some(to_thread);
+        let to_thread = self.get_highest_priority_thread_mut(&mut highest_ready_priority);
+        let sp = &mut to_thread.sp();
         self.remove_thread(to_thread);
-        unsafe{context::rt_hw_context_switch_to(&mut to_thread.sp() as *mut *mut () as *mut ());};
+        self.set_current_thread(Some(to_thread));
+        unsafe{context::rt_hw_context_switch_to(sp as *mut *mut () as *mut ());};
         unreachable!();
     }
 }

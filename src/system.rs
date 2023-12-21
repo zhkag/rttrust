@@ -1,12 +1,13 @@
+use crate::main;
 use crate::scheduler::Scheduler;
 use crate::hw::HardWare;
-use crate::Thread;
-use crate::List;
+use crate::thread::Thread;
+use crate::tick::Tick;
 
 static mut SYSTREM: Option<System> = None;
 
 fn main_fun(_parameter:*mut ()) {
-
+    main();
 }
 
 const MAIN_THREAD_STACK_SIZE: usize = 1024;
@@ -15,6 +16,7 @@ static mut MAIN_THREAD: Option<Thread> = None;
 
 pub struct System{
     scheduler:Option<Scheduler>,
+    tick:Tick,
 }
 
 impl System {
@@ -30,6 +32,7 @@ impl System {
     fn new() -> System {
         let systerm = System{
             scheduler:None,
+            tick:Tick::new(),
         };
         systerm
     }
@@ -57,6 +60,10 @@ impl System {
         self.scheduler.as_mut().unwrap()
     }
 
+    pub fn tick_mut(&mut self) ->&mut Tick {
+        &mut self.tick
+    }
+
     pub fn startup(&mut self) {
         self.init();
         self.scheduler_mut().start();
@@ -78,9 +85,15 @@ macro_rules! scheduler {
     }};
 }
 
-
 #[macro_export]
 macro_rules! schedule {
     ()=>{crate::system::System::global_mut().scheduler_mut().schedule()};
 }
 
+
+#[macro_export]
+macro_rules! tick {
+    ($($tokens:tt)*) => {{
+        crate::system::System::global_mut().tick_mut().$($tokens)*
+    }};
+}
