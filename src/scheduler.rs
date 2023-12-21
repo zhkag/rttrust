@@ -41,8 +41,8 @@ impl Scheduler {
 
     
     pub fn insert_thread(&mut self,thread:&mut Thread){
-        if self.current_thread_is_some() {
-            if thread == self.current_thread() {
+        if let Some(current_thread) = self.current_thread() {
+            if thread == current_thread {
                 thread.set_stat(Status::RUNNING|thread.stat() & !Status::STAT_MASK);
                 return;
             }
@@ -55,12 +55,11 @@ impl Scheduler {
         // self.ready_priority_group&= ~thread->number_mask
     }
 
-    pub fn current_thread_is_some(&mut self) ->bool {
-        self.current_thread.is_some()
-    }
-
-    pub fn current_thread(&mut self) ->&mut Thread {
-        unsafe {&mut *(self.current_thread.unwrap())}
+    pub fn current_thread(&mut self) -> Option<&mut Thread> {
+        if let Some(thread) = self.current_thread{
+            return Some(unsafe {&mut *(thread)});
+        }
+        return None;
     }
     pub fn set_current_thread(&mut self, thread:Option<*mut Thread>){
         self.current_thread = thread;
