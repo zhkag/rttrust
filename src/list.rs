@@ -1,4 +1,4 @@
-
+#[derive(PartialEq)]
 #[derive(Copy, Clone)]
 pub struct List<T> {
     next: Option<*mut List<T>>,
