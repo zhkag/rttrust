@@ -13,7 +13,6 @@ const MAIN_THREAD_STACK_SIZE: usize = 1024;
 static mut MAIN_THREAD_STACK: [u8; MAIN_THREAD_STACK_SIZE] = [0; MAIN_THREAD_STACK_SIZE];
 static mut MAIN_THREAD: Option<Thread> = None;
 
-
 pub struct System{
     scheduler:Option<Scheduler>,
 }
@@ -44,24 +43,24 @@ impl System {
     }
     fn init(&mut self)  {
         HardWare::board_init();
-        self.scheduler = Scheduler::new();
+        self.scheduler_init();
         self.main_app_init();
         // rt_system_timer_init();
         // rt_system_scheduler_init();
         crate::idle::rt_thread_idle_init();
     }
+
+    fn scheduler_init(&mut self) {
+        self.scheduler = Some(Scheduler::new());
+    }
+
     pub fn scheduler_mut(&mut self) ->&mut Scheduler {
         self.scheduler.as_mut().unwrap()
     }
 
-    pub fn scheduler(&mut self) ->Scheduler {
-        self.scheduler.unwrap()
-    }
-
     pub fn startup(&mut self) {
         self.init();
-
-        self.scheduler().start();
+        self.scheduler_mut().start();
         unreachable!();
     }
 }

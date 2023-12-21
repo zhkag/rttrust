@@ -13,15 +13,14 @@ pub struct Scheduler{
 }
 
 impl Scheduler {
-    pub fn new() -> Option<Scheduler> {
+    pub fn new() -> Scheduler {
         let scheduler = Scheduler{
             priority_table:[List::new();THREAD_PRIORITY_MAX],
             ready_priority_group:0,
             current_thread:None
         };
-        Some(scheduler)
+        scheduler
     }
-
 
     // pub fn current_thread(&self)->Option<&Thread>{
     //     self.current_thread
