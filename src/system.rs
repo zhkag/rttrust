@@ -34,12 +34,11 @@ impl System {
         systerm
     }
     fn main_app_init(&mut self) {
-        let size:u32 = core::mem::size_of::<[u8; MAIN_THREAD_STACK_SIZE]>().try_into().unwrap();
+        let stack_size:u32 = core::mem::size_of::<[u8; MAIN_THREAD_STACK_SIZE]>().try_into().unwrap();
         let stack_start = unsafe {MAIN_THREAD_STACK.as_mut_ptr() as *mut ()};
-        let thread = unsafe {&mut MAIN_THREAD};
-        let main_thread = Thread::new(main_fun, core::ptr::null_mut(), stack_start, size, 20);
-        *thread = Some(main_thread);
-        thread.as_mut().unwrap().startup(); 
+        let thread_static = unsafe {&mut MAIN_THREAD};
+        let main_thread = Thread::init(thread_static,main_fun, core::ptr::null_mut(), stack_start, stack_size, 20);
+        main_thread.startup();
     }
     fn init(&mut self)  {
         HardWare::board_init();
