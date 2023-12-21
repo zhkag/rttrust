@@ -1,7 +1,7 @@
 use crate::hw::HardWare;
 use crate::{scheduler,schedule};
-use crate::List;
-
+use crate::list::List;
+use crate::thread_self;
 
 
 #[derive(Copy, Clone)]
@@ -63,12 +63,15 @@ impl Thread {
 
     pub fn startup(&mut self){
         self.resume();
-        if thread_self().is_some(){
+        if thread_self!().is_some(){
             schedule!();
         }
     }
 }
 
-pub fn thread_self() -> Option<Thread>{
-    scheduler!(current_thread())
+#[macro_export]
+macro_rules! thread_self {
+    () => {{
+        crate::scheduler!(current_thread())
+    }};
 }

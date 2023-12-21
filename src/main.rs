@@ -9,10 +9,7 @@ mod cpuport;
 mod hw;
 mod thread;
 mod list;
-
-use list::{*};
-use thread::Thread;
-
+mod tick;
 
 use core::panic::PanicInfo;
 
@@ -21,6 +18,14 @@ fn panic(_info: &PanicInfo) -> ! {
     loop {}
 }
 
+
+#[no_mangle]
+fn main() {
+    let mut tick:usize = 0;
+    loop {
+        tick = tick!(get());
+    }
+}
 
 #[no_mangle]
 fn entry() {
