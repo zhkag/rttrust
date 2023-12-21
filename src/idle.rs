@@ -15,5 +15,5 @@ pub fn rt_thread_idle_init(){
     let thread = unsafe {&mut IDLE_THREAD};
     let idle_thread = Thread::new(idle_fun, core::ptr::null_mut(), stack_start, size, 31);
     *thread = Some(idle_thread);
-    thread.unwrap().startup();
+    thread.as_mut().unwrap().startup();
 }

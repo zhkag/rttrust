@@ -40,7 +40,7 @@ impl System {
         let thread = unsafe {&mut MAIN_THREAD};
         let main_thread = Thread::new(main_fun, core::ptr::null_mut(), stack_start, size, 20);
         *thread = Some(main_thread);
-        thread.unwrap().startup(); 
+        thread.as_mut().unwrap().startup(); 
     }
     fn init(&mut self)  {
         HardWare::board_init();
@@ -48,7 +48,7 @@ impl System {
         self.main_app_init();
         // rt_system_timer_init();
         // rt_system_scheduler_init();
-        // crate::idle::rt_thread_idle_init();
+        crate::idle::rt_thread_idle_init();
     }
     pub fn scheduler_mut(&mut self) ->&mut Scheduler {
         self.scheduler.as_mut().unwrap()
