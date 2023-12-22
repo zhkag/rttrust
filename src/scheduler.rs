@@ -41,9 +41,11 @@ impl Scheduler {
 
     
     pub fn insert_thread(&mut self,thread:&mut Thread){
-        if thread == self.current_thread() {
-            thread.set_stat(Status::RUNNING|thread.stat() & !Status::STAT_MASK);
-            return;
+        if self.current_thread_is_some() {
+            if thread == self.current_thread() {
+                thread.set_stat(Status::RUNNING|thread.stat() & !Status::STAT_MASK);
+                return;
+            }
         }
         self.priority_table[thread.current_priority() as usize].push_front(&mut thread.list);
         self.ready_priority_group |= thread.number_mask() as usize;
