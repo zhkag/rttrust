@@ -43,7 +43,7 @@ impl Scheduler {
     pub fn insert_thread(&mut self,thread:&mut Thread){
         if let Some(current_thread) = self.current_thread() {
             if thread == current_thread {
-                thread.set_stat(Status::RUNNING|thread.stat() & !Status::STAT_MASK);
+                thread.set_stat(Status::RUNNING as u8|thread.stat() & !(Status::STAT_MASK as u8));
                 return;
             }
         }
@@ -84,7 +84,7 @@ impl Scheduler {
         let mut highest_ready_priority = 0;
         let to_thread = self.get_highest_priority_thread_mut(&mut highest_ready_priority);
         let sp = &mut to_thread.sp();
-        to_thread.set_stat(Status::RUNNING);
+        to_thread.set_stat(Status::RUNNING as u8);
         self.remove_thread(to_thread);
         self.set_current_thread(Some(to_thread));
         unsafe{context::rt_hw_context_switch_to(sp as *mut *mut () as *mut ());};
