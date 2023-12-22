@@ -58,8 +58,9 @@ pub struct Thread
 
 fn _thread_exit()
 {
-    let thread = thread_self!();
-    thread.stat = Status::INIT;
+    if let Some(thread) = thread_self!() {
+        thread.stat = Status::INIT;
+    }
     schedule!();
 }
 
@@ -107,7 +108,7 @@ impl Thread {
     pub fn startup(&mut self){
         self.stat = Status::SUSPEND;
         self.resume();
-        if scheduler!(current_thread_is_some()){
+        if thread_self!().is_some(){
             schedule!();
         }
     }
