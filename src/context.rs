@@ -16,11 +16,6 @@ global_asm!(".equ  NVIC_PENDSVSET,     0x10000000");
 #[export_name = "rt_hw_context_switch"]
 #[export_name = "rt_hw_context_switch_interrupt"]
 pub unsafe extern "C" fn rt_hw_context_switch_interrupt(from_sp: *mut (), to_sp: *mut (),from_thread:&mut Thread,to_thread:&mut Thread) {
-    asm!("mov   r0, {}",in(reg) from_sp);
-    asm!("mov   r1, {}",in(reg) to_sp);
-    asm!("mov   r2, {}",in(reg) from_thread);
-    asm!("mov   r3, {}",in(reg) to_thread);
-
     asm!("LDR   r2, ={}",sym cpuport::RT_THREAD_SWITCH_INTERRUPT_FLAG);
     asm!("LDR   r3, [r2]");
     asm!("CMP   r3, #1");
@@ -42,7 +37,6 @@ pub unsafe extern "C" fn rt_hw_context_switch_interrupt(from_sp: *mut (), to_sp:
 
 #[export_name = "rt_hw_context_switch_to"]
 pub unsafe extern "C" fn rt_hw_context_switch_to(input: *mut ()) {
-    asm!("mov   r0, {}",in(reg) input);
     asm!("LDR   r1, ={}",sym cpuport::RT_INTERRUPT_TO_THREAD);
     asm!("STR   r0, [r1]");
     asm!("MRS   r2, CONTROL");
