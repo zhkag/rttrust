@@ -3,29 +3,23 @@ use core::arch::asm;
 use crate::cpuport;
 use crate::tick;
 use crate::thread::Thread;
+use core::arch::global_asm;
+
+global_asm!(".equ  SCB_VTOR,           0xE000ED08");
+global_asm!(".equ  NVIC_INT_CTRL,      0xE000ED04");
+global_asm!(".equ  NVIC_SYSPRI2,       0xE000ED20");
+global_asm!(".equ  NVIC_PENDSV_PRI,    0xFFFF0000");
+global_asm!(".equ  NVIC_PENDSVSET,     0x10000000");
 
 
-// #[export_name = "rt_hw_interrupt_disable"]
-// pub unsafe extern "C" fn rt_hw_interrupt_disable(){
-//     asm!("MRS     r0, PRIMASK");
-//     asm!("CPSID   I");
-//     asm!("BX      LR");
-// }
-
-// #[export_name = "rt_hw_interrupt_enable"]
-// pub unsafe extern "C" fn rt_hw_interrupt_enable(level:()){
-//     asm!("MSR     PRIMASK, r0");
-//     asm!("BX      LR");
-// }
 
 #[export_name = "rt_hw_context_switch"]
 #[export_name = "rt_hw_context_switch_interrupt"]
 pub unsafe extern "C" fn rt_hw_context_switch_interrupt(from_sp: *mut (), to_sp: *mut (),from_thread:&mut Thread,to_thread:&mut Thread) {
-    asm!(".equ  NVIC_INT_CTRL,      0xE000ED04");
-    asm!(".equ  NVIC_PENDSVSET,     0x10000000");
-
     asm!("mov   r0, {}",in(reg) from_sp);
     asm!("mov   r1, {}",in(reg) to_sp);
+    asm!("mov   r2, {}",in(reg) from_thread);
+    asm!("mov   r3, {}",in(reg) to_thread);
 
     asm!("LDR   r2, ={}",sym cpuport::RT_THREAD_SWITCH_INTERRUPT_FLAG);
     asm!("LDR   r3, [r2]");
@@ -44,16 +38,10 @@ pub unsafe extern "C" fn rt_hw_context_switch_interrupt(from_sp: *mut (), to_sp:
     asm!("LDR   r0, =NVIC_INT_CTRL");
     asm!("LDR   r1, =NVIC_PENDSVSET");
     asm!("STR   r1, [r0]");
-    asm!("BX    LR");
 }
 
 #[export_name = "rt_hw_context_switch_to"]
 pub unsafe extern "C" fn rt_hw_context_switch_to(input: *mut ()) {
-    asm!(".equ  SCB_VTOR,           0xE000ED08");
-    asm!(".equ  NVIC_INT_CTRL,      0xE000ED04");
-    asm!(".equ  NVIC_SYSPRI2,       0xE000ED20");
-    asm!(".equ  NVIC_PENDSV_PRI,    0xFFFF0000");
-    asm!(".equ  NVIC_PENDSVSET,     0x10000000");
     asm!("mov   r0, {}",in(reg) input);
     asm!("LDR   r1, ={}",sym cpuport::RT_INTERRUPT_TO_THREAD);
     asm!("STR   r0, [r1]");
