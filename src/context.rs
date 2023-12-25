@@ -2,6 +2,50 @@
 use core::arch::asm;
 use crate::cpuport;
 use crate::tick;
+use crate::thread::Thread;
+
+
+// #[export_name = "rt_hw_interrupt_disable"]
+// pub unsafe extern "C" fn rt_hw_interrupt_disable(){
+//     asm!("MRS     r0, PRIMASK");
+//     asm!("CPSID   I");
+//     asm!("BX      LR");
+// }
+
+// #[export_name = "rt_hw_interrupt_enable"]
+// pub unsafe extern "C" fn rt_hw_interrupt_enable(level:()){
+//     asm!("MSR     PRIMASK, r0");
+//     asm!("BX      LR");
+// }
+
+#[export_name = "rt_hw_context_switch"]
+#[export_name = "rt_hw_context_switch_interrupt"]
+pub unsafe extern "C" fn rt_hw_context_switch_interrupt(from_sp: *mut (), to_sp: *mut (),from_thread:&mut Thread,to_thread:&mut Thread) {
+    asm!(".equ  NVIC_INT_CTRL,      0xE000ED04");
+    asm!(".equ  NVIC_PENDSVSET,     0x10000000");
+
+    asm!("mov   r0, {}",in(reg) from_sp);
+    asm!("mov   r1, {}",in(reg) to_sp);
+
+    asm!("LDR   r2, ={}",sym cpuport::RT_THREAD_SWITCH_INTERRUPT_FLAG);
+    asm!("LDR   r3, [r2]");
+    asm!("CMP   r3, #1");
+    asm!("BEQ   0f");
+    asm!("MOV   r3, #1");
+    asm!("STR   r3, [r2]");
+
+    asm!("LDR   r2, ={}",sym cpuport::RT_INTERRUPT_FROM_THREAD);
+    asm!("STR   r0, [r2]");
+
+    asm!("0:");
+    asm!("LDR   r2, ={}",sym cpuport::RT_INTERRUPT_TO_THREAD);
+    asm!("STR   r1, [r2]");
+
+    asm!("LDR   r0, =NVIC_INT_CTRL");
+    asm!("LDR   r1, =NVIC_PENDSVSET");
+    asm!("STR   r1, [r0]");
+    asm!("BX    LR");
+}
 
 #[export_name = "rt_hw_context_switch_to"]
 pub unsafe extern "C" fn rt_hw_context_switch_to(input: *mut ()) {

@@ -79,6 +79,9 @@ impl<T> List<T> {
     }
     
     pub fn remove(&mut self, node: &mut List<T>) {
+        if node.prev.is_none() && node.next.is_none() {
+            return;
+        }
 
         if let Some(prev) = node.prev.as_mut() {
             unsafe {

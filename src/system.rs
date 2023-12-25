@@ -40,7 +40,8 @@ impl System {
         let stack_size:u32 = core::mem::size_of::<[u8; MAIN_THREAD_STACK_SIZE]>().try_into().unwrap();
         let stack_start = unsafe {MAIN_THREAD_STACK.as_mut_ptr() as *mut ()};
         let thread_static = unsafe {&mut MAIN_THREAD};
-        let main_thread = Thread::init(thread_static,main_fun, core::ptr::null_mut(), stack_start, stack_size, 20);
+        let main_thread = Thread::init(thread_static,main_fun, core::ptr::null_mut(),
+                                                    stack_start, stack_size, 20, 32);
         main_thread.startup();
     }
     fn init(&mut self)  {
