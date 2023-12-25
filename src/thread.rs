@@ -14,11 +14,13 @@ pub enum Status {
     RUNNING     = 0x03,     // Running status
     SUSPEND_MASK= 0x04,
     STAT_MASK   = 0x07,
+    STAT_YIELD  = 0x08,     // indicate whether remaining_tick has been reloaded since last schedule
 }
 
 impl Status {
     const SUSPEND_INTERRUPTIBLE: Status = Status::SUSPEND_MASK;
     const SUSPEND: Status = Status::SUSPEND_INTERRUPTIBLE;
+    pub const STAT_YIELD_MASK: Status = Status::STAT_YIELD;
 }
 
 // impl BitAnd for Status {
@@ -54,6 +56,8 @@ pub struct Thread
     current_priority:u8,
     init_priority:u8,
     stat: u8,
+    init_tick:u8,
+    remaining_tick:u8,
 }
 
 fn _thread_exit()
@@ -66,7 +70,8 @@ fn _thread_exit()
 
 
 impl Thread {
-    fn new(entry: fn(*mut ()),parameter:*mut (),stack_start:*mut (),stack_size:u32,priority:u8) -> Thread {
+    fn new(entry: fn(*mut ()), parameter:*mut (), stack_start:*mut (), 
+           stack_size:u32, priority:u8, tick:u8) -> Thread {
         let mut thread = Thread {
             entry,
             parameter,
@@ -78,13 +83,17 @@ impl Thread {
             current_priority:priority,
             number_mask: 1 << priority,
             stat:Status::INIT as u8,
+            init_tick:tick,
+            remaining_tick:tick,
         };
         let ptr = thread.stack_addr as u32;
-        thread.sp = HardWare::stack_init(thread.entry, thread.parameter, (ptr+thread.stack_size-16)as *mut (), _thread_exit);
+        thread.sp = HardWare::stack_init(thread.entry, thread.parameter,
+                             (ptr+thread.stack_size-16)as *mut (), _thread_exit);
         thread
     }
-    pub fn init(thread: &mut Option<Thread>,entry: fn(*mut ()),parameter:*mut (),stack_start:*mut (),stack_size:u32,priority:u8) -> &mut Thread{
-        *thread = Some(Thread::new(entry, parameter, stack_start, stack_size, priority));
+    pub fn init(thread: &mut Option<Thread>, entry: fn(*mut ()), parameter:*mut (),
+                stack_start:*mut (), stack_size:u32, priority:u8, tick:u8) -> &mut Thread{
+        *thread = Some(Thread::new(entry, parameter, stack_start, stack_size, priority, tick));
         thread.as_mut().unwrap()
     }
 
@@ -118,6 +127,15 @@ impl Thread {
     }
     pub fn set_stat(&mut self, stat:u8) {
         self.stat = stat;
+    }
+    
+    pub fn tick_decrease(&mut self) -> u8 {
+        self.remaining_tick -= 1;
+        if self.remaining_tick == 0 {
+            self.remaining_tick = self.init_tick;
+            return 0;
+        }
+        self.remaining_tick
     }
 
 }
