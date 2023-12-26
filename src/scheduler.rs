@@ -1,7 +1,7 @@
 use crate::thread::{Thread,Status};
 use crate::list::List;
 use crate::context;
-use crate::{offset_of,offset_of_mut,thread_self};
+use crate::thread_self;
 use crate::scheduler;
 
 const THREAD_PRIORITY_MAX: usize = 32;
@@ -94,16 +94,16 @@ impl Scheduler {
         }
         thread.set_stat(Status::READY as u8 | (thread.stat() & !(Status::STAT_MASK as u8)));
         if (thread.stat() & (Status::STAT_YIELD_MASK as u8)) != 0 {
-            self.priority_table[thread.current_priority() as usize].push_back(&mut thread.list);
+            self.priority_table[thread.current_priority() as usize].push_back(thread.list_mut());
         }else {
-            self.priority_table[thread.current_priority() as usize].push_front(&mut thread.list);
+            self.priority_table[thread.current_priority() as usize].push_front(thread.list_mut());
         }
         self.ready_priority_group |= thread.number_mask() as usize;
         // unsafe {context::rt_hw_interrupt_enable(level)};
     }
     pub fn remove_thread(&mut self, thread:&mut Thread){
         // let level = unsafe{context::rt_hw_interrupt_disable()};
-        self.priority_table[thread.current_priority() as usize].remove(&mut thread.list);
+        self.priority_table[thread.current_priority() as usize].remove(thread.list_mut());
         if self.priority_table[thread.current_priority() as usize].isempty() {
             self.ready_priority_group &= !(thread.number_mask() as usize);
         }
@@ -126,7 +126,7 @@ impl Scheduler {
         let highest_ready_priority:u8 = self.ready_priority_group.trailing_zeros() as u8;
         *highest_prio = highest_ready_priority;
         let node = self.priority_table[highest_ready_priority as usize].iter_mut().next().expect("REASON");
-        offset_of_mut!(node,Thread,list)
+        Thread::list_to_thread(node)
     }
     // fn get_highest_priority_thread(&self,highest_prio: &mut usize) -> Thread {
     //     let highest_ready_priority:usize = self.ready_priority_group.trailing_zeros() as usize;
