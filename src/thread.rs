@@ -51,7 +51,7 @@ pub struct Thread
     parameter: *mut (),
     stack_addr: *mut (),
     stack_size:u32,
-    pub list:List<Thread>,
+    list:List<Thread>,
     number_mask:u32,
     current_priority:u8,
     init_priority:u8,
@@ -136,6 +136,15 @@ impl Thread {
             return 0;
         }
         self.remaining_tick
+    }
+
+    pub fn list_mut(&mut self) -> &mut List<Self> {
+        &mut self.list
+    }
+
+    pub fn list_to_thread(list: *mut List<Thread>) -> &'static mut Thread {
+        #[allow(deref_nullptr)]
+        unsafe { &mut *((list as usize - (&(&*(0 as *const Thread)).list) as *const List<Thread> as usize) as *mut Thread) }
     }
 
 }

@@ -141,22 +141,6 @@ impl<T> Iterator for LinkedListIteratorMut<T> {
     }
 }
 
-#[macro_export]
-macro_rules! offset_of_mut {
-    ($node:ident, $type:ty, $member:ident) => {{
-        #[allow(deref_nullptr)]
-        unsafe { &mut *(($node as usize - (&(&*(0 as *const $type)).$member) as *const List<$type> as usize) as *mut $type) }
-    }};
-}
-
-#[macro_export]
-macro_rules! offset_of {
-    ($node:ident, $type:ty, $member:ident) => {{
-        #[allow(deref_nullptr)]
-        unsafe { *(($node as usize - (&(&*(0 as *const $type)).$member) as *const List<$type> as usize) as *mut $type) }
-    }};
-}
-
 // struct TestListU8
 // {
 //     value:u8,
