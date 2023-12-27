@@ -97,9 +97,10 @@ impl Thread {
         thread.as_mut().unwrap()
     }
 
-    pub fn sp(&self) ->*mut (){
-        self.sp
+    pub fn sp_mut(&mut self) ->&mut *mut (){
+        &mut self.sp
     }
+
     pub fn current_priority(&self) ->u8 {
         self.current_priority
     }

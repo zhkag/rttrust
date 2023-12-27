@@ -32,23 +32,23 @@ impl Scheduler {
         }
         // let level = unsafe{context::rt_hw_interrupt_disable()};
          /* need_insert_from_thread: need to insert from_thread to ready queue */
-         let mut need_insert_from_thread = false;
-         let mut highest_ready_priority = 0;
-         let mut to_thread = self.get_highest_priority_thread_mut(&mut highest_ready_priority);
-         let current_thread = thread_self!().unwrap();
+        let mut need_insert_from_thread = false;
+        let mut highest_ready_priority = 0;
+        let mut to_thread = self.get_highest_priority_thread_mut(&mut highest_ready_priority);
+        let current_thread = thread_self!().unwrap();
 
-         if (current_thread.stat() & Status::STAT_MASK as u8) == Status::RUNNING as u8 {
-             if current_thread.current_priority() < highest_ready_priority {
-                 to_thread = current_thread;
-             }
-             else if current_thread.current_priority() == highest_ready_priority && (current_thread.stat() & Status::STAT_YIELD_MASK as u8) == 0 {
-                 to_thread = current_thread;
-             }
-             else {
-                 need_insert_from_thread = true;
-             }
-             if to_thread != thread_self!().unwrap()
-             {
+        if (current_thread.stat() & Status::STAT_MASK as u8) == Status::RUNNING as u8 {
+            if current_thread.current_priority() < highest_ready_priority {
+                to_thread = current_thread;
+            }
+            else if current_thread.current_priority() == highest_ready_priority && (current_thread.stat() & Status::STAT_YIELD_MASK as u8) == 0 {
+                to_thread = current_thread;
+            }
+            else {
+                need_insert_from_thread = true;
+            }
+            if to_thread != thread_self!().unwrap()
+            {
                 /* if the destination thread is not the same as current thread */
                 let from_thread = thread_self!().unwrap();
                 if (from_thread.stat() & Status::STAT_YIELD_MASK as u8) != 0{
@@ -64,17 +64,15 @@ impl Scheduler {
                 scheduler!(remove_thread(to_thread));
                 to_thread.set_stat(Status::RUNNING as u8 | (to_thread.stat() & !(Status::STAT_MASK as u8)));
 
-
-                let from_sp = (&mut from_thread.sp()) as *mut *mut () as *mut ();
-                let to_sp = (&mut to_thread.sp()) as *mut *mut () as *mut ();
-
+                let from_sp = (from_thread.sp_mut()) as *mut *mut () as *mut ();
+                let to_sp = (to_thread.sp_mut()) as *mut *mut () as *mut ();
                 unsafe{context::rt_hw_context_switch_interrupt(from_sp,to_sp,from_thread,to_thread);};
 
-             }else {
+            }else {
                 scheduler!(remove_thread(thread_self!().unwrap()));
                 current_thread.set_stat(Status::RUNNING as u8 | (current_thread.stat() & !(Status::STAT_MASK as u8)));
-             }
-         }
+            }
+        }
 
 
     }
@@ -138,11 +136,11 @@ impl Scheduler {
     pub fn start(&mut self) {
         let mut highest_ready_priority = 0;
         let to_thread = self.get_highest_priority_thread_mut(&mut highest_ready_priority);
-        let sp = &mut to_thread.sp();
         scheduler!(remove_thread(to_thread));
         to_thread.set_stat(Status::RUNNING as u8);
-        self.set_current_thread(Some(to_thread));
-        unsafe{context::rt_hw_context_switch_to(sp as *mut *mut () as *mut ());};
+        scheduler!(set_current_thread(Some(to_thread)));
+        let sp = to_thread.sp_mut() as *mut *mut () as *mut ();
+        unsafe{context::rt_hw_context_switch_to(sp);};
         unreachable!();
     }
 }
