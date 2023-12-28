@@ -11,11 +11,41 @@ global_asm!(".equ  NVIC_SYSPRI2,       0xE000ED20");
 global_asm!(".equ  NVIC_PENDSV_PRI,    0xFFFF0000");
 global_asm!(".equ  NVIC_PENDSVSET,     0x10000000");
 
+#[export_name = "rt_hw_interrupt_disable"]
+pub extern "C" fn rt_hw_interrupt_disable() -> isize{
+    let level:isize;
+    unsafe{
+        asm!("MRS     r0, PRIMASK");
+        asm!("CPSID   I");
+        asm!("mov {}, r0", out(reg) level);
+    }
+    level
+}
 
+#[export_name = "rt_hw_interrupt_enable"]
+pub extern "C" fn rt_hw_interrupt_enable(_level:isize){
+    unsafe{
+        asm!("MSR     PRIMASK, r0");
+    }
+}
 
 #[export_name = "rt_hw_context_switch"]
+pub extern "C" fn rt_hw_context_switch(_from_sp: *mut (), _to_sp: *mut ()) {
+    unsafe{asm!("bl   rt_hw_context_switch_base");}
+}
+
 #[export_name = "rt_hw_context_switch_interrupt"]
-pub unsafe extern "C" fn rt_hw_context_switch_interrupt(from_sp: *mut (), to_sp: *mut (),from_thread:&mut Thread,to_thread:&mut Thread) {
+pub extern "C" fn rt_hw_context_switch_interrupt(_from_sp: *mut (), _to_sp: *mut (),_from_thread:&mut Thread,_to_thread:&mut Thread) {
+    unsafe{asm!("bl   rt_hw_context_switch_base");}
+}
+
+#[export_name = "rt_hw_context_switch_to"]
+pub extern "C" fn rt_hw_context_switch_to(_sp: *mut ()) {
+    unsafe{asm!("bl   rt_hw_context_switch_to_base");}
+}
+
+#[no_mangle]
+unsafe extern "C" fn rt_hw_context_switch_base(_from_sp: *mut (), _to_sp: *mut (),_from_thread:&mut Thread,_to_thread:&mut Thread) {
     asm!("LDR   r2, ={}",sym cpuport::RT_THREAD_SWITCH_INTERRUPT_FLAG);
     asm!("LDR   r3, [r2]");
     asm!("CMP   r3, #1");
@@ -35,8 +65,8 @@ pub unsafe extern "C" fn rt_hw_context_switch_interrupt(from_sp: *mut (), to_sp:
     asm!("STR   r1, [r0]");
 }
 
-#[export_name = "rt_hw_context_switch_to"]
-pub unsafe extern "C" fn rt_hw_context_switch_to(input: *mut ()) {
+#[no_mangle]
+unsafe extern "C" fn rt_hw_context_switch_to_base(_sp: *mut ()) {
     asm!("LDR   r1, ={}",sym cpuport::RT_INTERRUPT_TO_THREAD);
     asm!("STR   r0, [r1]");
     asm!("MRS   r2, CONTROL");
@@ -67,14 +97,10 @@ pub unsafe extern "C" fn rt_hw_context_switch_to(input: *mut ()) {
     asm!("ISB");
 }
 
-
-
 #[export_name = "SysTick_Handler"]
 unsafe extern "C" fn sys_tick_handler() {
     tick!(increase());
 }
-
-
 
 #[export_name = "PendSV_Handler"]
 unsafe extern "C" fn pend_sv_handler() {
@@ -117,7 +143,7 @@ unsafe extern "C" fn pend_sv_handler() {
 }
 
 #[export_name = "SystemInit"]
-unsafe extern "C" fn system_init() {
+extern "C" fn system_init() {
 
 }
 
@@ -157,4 +183,3 @@ unsafe extern "C" fn reset_handler() {
     asm!("bl    entry");
     asm!("bx    lr");
 }
-
