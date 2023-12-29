@@ -92,16 +92,16 @@ impl Scheduler {
         }
         thread.set_stat(Status::READY as u8 | (thread.stat() & !(Status::STAT_MASK as u8)));
         if (thread.stat() & (Status::STAT_YIELD_MASK as u8)) != 0 {
-            self.priority_table[thread.current_priority() as usize].push_back(thread.list_mut());
+            self.priority_table[thread.current_priority() as usize].insert_before(thread.list_mut());
         }else {
-            self.priority_table[thread.current_priority() as usize].push_front(thread.list_mut());
+            self.priority_table[thread.current_priority() as usize].insert_after(thread.list_mut());
         }
         self.ready_priority_group |= thread.number_mask() as usize;
         // context::rt_hw_interrupt_enable(level);
     }
     pub fn remove_thread(&mut self, thread:&mut Thread){
         // let level = context::rt_hw_interrupt_disable();
-        self.priority_table[thread.current_priority() as usize].remove(thread.list_mut());
+        thread.list_mut().remove();
         if self.priority_table[thread.current_priority() as usize].isempty() {
             self.ready_priority_group &= !(thread.number_mask() as usize);
         }
@@ -120,7 +120,7 @@ impl Scheduler {
     pub fn init(&self) {
     }
 
-    fn get_highest_priority_thread_mut(&self,highest_prio: &mut u8) -> &mut Thread {
+    fn get_highest_priority_thread_mut(&mut self,highest_prio: &mut u8) -> &mut Thread {
         let highest_ready_priority:u8 = self.ready_priority_group.trailing_zeros() as u8;
         *highest_prio = highest_ready_priority;
         let node = self.priority_table[highest_ready_priority as usize].iter_mut().next().expect("REASON");
