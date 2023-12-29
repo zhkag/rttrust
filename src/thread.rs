@@ -71,7 +71,7 @@ impl Thread {
             stack_addr:stack_start,
             stack_size,
             sp:core::ptr::null_mut(),
-            list:List::new(),
+            list:List::init(),
             init_priority:priority,
             current_priority:priority,
             number_mask: 1 << priority,

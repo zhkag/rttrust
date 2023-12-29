@@ -36,7 +36,7 @@ impl System {
         let systerm = Self{
             scheduler:None,
             tick:Tick::new(),
-            timer_list:List::new(),
+            timer_list:List::init(),
         };
         systerm
     }

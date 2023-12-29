@@ -22,7 +22,7 @@ impl Timer {
             parameter,
             init_tick:time,
             timeout_tick:0,
-            list:List::new(),
+            list:List::init(),
             flag,
         };
         *timer = Some(timer_init);
