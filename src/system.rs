@@ -3,6 +3,8 @@ use crate::scheduler::Scheduler;
 use crate::hw::HardWare;
 use crate::thread::Thread;
 use crate::tick::Tick;
+use crate::list::List;
+use crate::timer::Timer;
 
 static mut SYSTREM: Option<System> = None;
 
@@ -17,22 +19,24 @@ static mut MAIN_THREAD: Option<Thread> = None;
 pub struct System{
     scheduler:Option<Scheduler>,
     tick:Tick,
+    timer_list:List<Timer>,
 }
 
 impl System {
-    pub fn global_mut() -> &'static mut System{
+    pub fn global_mut() -> &'static mut Self{
         unsafe {
             if (&mut SYSTREM).is_none(){
-                SYSTREM = Some(System::new());
+                SYSTREM = Some(Self::new());
             }
             return SYSTREM.as_mut().unwrap();
         }
     }
 
-    fn new() -> System {
-        let systerm = System{
+    fn new() -> Self {
+        let systerm = Self{
             scheduler:None,
             tick:Tick::new(),
+            timer_list:List::new(),
         };
         systerm
     }
@@ -63,6 +67,10 @@ impl System {
 
     pub fn tick_mut(&mut self) ->&mut Tick {
         &mut self.tick
+    }
+
+    pub fn timer_list_mut(&mut self) ->&mut List<Timer>{
+        &mut self.timer_list
     }
 
     pub fn startup(&mut self) {

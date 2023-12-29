@@ -10,6 +10,7 @@ mod hw;
 mod thread;
 mod list;
 mod tick;
+mod timer;
 
 use core::panic::PanicInfo;
 

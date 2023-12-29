@@ -1,4 +1,5 @@
 use crate::hw::HardWare;
+use crate::timer::Timer;
 use crate::{scheduler,schedule};
 use crate::list::List;
 use crate::thread_self;
@@ -51,49 +52,60 @@ pub struct Thread
     parameter: *mut (),
     stack_addr: *mut (),
     stack_size:u32,
-    list:List<Thread>,
+    list:List<Self>,
     number_mask:u32,
     current_priority:u8,
     init_priority:u8,
     stat: u8,
     init_tick:u8,
     remaining_tick:u8,
+    thread_timer:Option<Timer>,
 }
-
-fn _thread_exit()
-{
-    if let Some(thread) = thread_self!() {
-        thread.stat = Status::INIT as u8;
-    }
-    schedule!();
-}
-
 
 impl Thread {
     fn new(entry: fn(*mut ()), parameter:*mut (), stack_start:*mut (), 
-           stack_size:u32, priority:u8, tick:u8) -> Thread {
-        let mut thread = Thread {
+           stack_size:u32, priority:u8, tick:u8) -> Self {
+        let mut thread = Self {
             entry,
             parameter,
             stack_addr:stack_start,
             stack_size,
             sp:core::ptr::null_mut(),
-            list:List::init(),
+            list:List::new(),
             init_priority:priority,
             current_priority:priority,
             number_mask: 1 << priority,
             stat:Status::INIT as u8,
             init_tick:tick,
             remaining_tick:tick,
+            thread_timer:None,
         };
         let ptr = thread.stack_addr as u32;
         thread.sp = HardWare::stack_init(thread.entry, thread.parameter,
-                             (ptr+thread.stack_size-16)as *mut (), _thread_exit);
+                             (ptr+thread.stack_size-16)as *mut (), Self::thread_exit);
+        
+        let timer_parameter = thread.as_mut_ptr() as *mut ();
+        let _timer = Timer::init(&mut thread.thread_timer, Self::thread_timeout, timer_parameter, 0, 0);
         thread
     }
-    pub fn init(thread: &mut Option<Thread>, entry: fn(*mut ()), parameter:*mut (),
-                stack_start:*mut (), stack_size:u32, priority:u8, tick:u8) -> &mut Thread{
-        *thread = Some(Thread::new(entry, parameter, stack_start, stack_size, priority, tick));
+    fn as_mut_ptr(&mut self) -> *mut Self {
+        self as *mut Self
+    }
+
+    fn thread_timeout(parameter:*mut ()){
+        let thread = unsafe{&mut *(parameter as *mut Self)};
+        
+    }
+    fn thread_exit()
+    {
+        if let Some(thread) = thread_self!() {
+            thread.stat = Status::INIT as u8;
+        }
+        schedule!();
+    }
+    pub fn init(thread: &mut Option<Self>, entry: fn(*mut ()), parameter:*mut (),
+                stack_start:*mut (), stack_size:u32, priority:u8, tick:u8) -> &mut Self{
+        *thread = Some(Self::new(entry, parameter, stack_start, stack_size, priority, tick));
         thread.as_mut().unwrap()
     }
 
@@ -143,9 +155,9 @@ impl Thread {
         &mut self.list
     }
 
-    pub fn list_to_thread(list: *mut List<Thread>) -> &'static mut Thread {
+    pub fn list_to_thread(list: *mut List<Self>) -> &'static mut Self {
         #[allow(deref_nullptr)]
-        unsafe { &mut *((list as usize - (&(&*(0 as *const Thread)).list) as *const List<Thread> as usize) as *mut Thread) }
+        unsafe { &mut *((list as usize - (&(&*(0 as *const Self)).list) as *const List<Self> as usize) as *mut Self) }
     }
 
 }

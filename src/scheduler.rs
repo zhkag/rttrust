@@ -14,8 +14,8 @@ pub struct Scheduler{
 }
 
 impl Scheduler {
-    pub fn new() -> Scheduler {
-        let scheduler = Scheduler{
+    pub fn new() -> Self {
+        let scheduler = Self{
             priority_table:[List::new();THREAD_PRIORITY_MAX],
             ready_priority_group:0,
             current_thread:None
