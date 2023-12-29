@@ -1,20 +1,8 @@
 #[derive(PartialEq)]
 #[derive(Copy, Clone)]
 pub struct List<T> {
-    next: Option<*mut List<T>>,
-    prev: Option<*mut List<T>>,
-}
-
-impl<T> List<T> {
-
-    pub fn static_init(static_self:&mut Option<List<T>>) -> &mut Option<List<T>>{
-        *static_self=Some(List{prev:None,next:None});
-        static_self  
-    }
-
-    pub fn init() -> List<T>{
-        List{prev:None,next:None}
-    }
+    next: Option<*mut Self>,
+    prev: Option<*mut Self>,
 }
 
 impl<T> List<T> {
@@ -25,8 +13,8 @@ impl<T> List<T> {
         }
     }
     
-    pub fn push_front(&mut self, new_node: &mut List<T>) {
-        let raw_node = new_node as *mut List<T>;
+    pub fn push_front(&mut self, new_node: &mut Self) {
+        let raw_node = new_node as *mut Self;
         if let Some(next) = self.next {
             unsafe {
                 (*next).prev = Some(raw_node);
@@ -37,9 +25,8 @@ impl<T> List<T> {
         }
         self.next = Some(raw_node);
     }
-    
-    pub fn push_back(&mut self, new_node: &mut List<T>) {
-        let raw_node = new_node as *mut List<T>;
+    pub fn push_back(&mut self, new_node: &mut Self) {
+        let raw_node = new_node as *mut Self;
         if let Some(tail) = self.prev {
             unsafe {
                 (*tail).next = Some(raw_node);
@@ -50,8 +37,8 @@ impl<T> List<T> {
         }
         self.prev = Some(raw_node);
     }
-    pub fn pop_front(&mut self) -> Option<*mut List<T>> {
-        self.next.take().map(|head: *mut List<T>| {
+    pub fn pop_front(&mut self) -> Option<*mut Self> {
+        self.next.take().map(|head: *mut Self| {
             if let Some(next) = unsafe { &mut *head }.next.as_mut() {
                 unsafe {
                     (*(*next)).prev = None;
@@ -64,8 +51,8 @@ impl<T> List<T> {
         })
     }
     
-    pub fn pop_back(&mut self) -> Option<*mut List<T>> {
-        self.prev.take().map(|tail: *mut List<T>| {
+    pub fn pop_back(&mut self) -> Option<*mut Self> {
+        self.prev.take().map(|tail: *mut Self| {
             if let Some(prev) = unsafe { &mut *tail }.prev.as_mut() {
                 unsafe {
                     (*(*prev)).next = None;
@@ -78,7 +65,7 @@ impl<T> List<T> {
         })
     }
     
-    pub fn remove(&mut self, node: &mut List<T>) {
+    pub fn remove(&mut self, node: &mut Self) {
         if node.prev.is_none() && node.next.is_none() {
             return;
         }

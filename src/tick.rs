@@ -1,14 +1,15 @@
 use crate::thread_self;
 use crate::schedule;
 use crate::thread::Status;
+use crate::timer::Timer;
 
 pub struct Tick{
     value:usize
 }
 
 impl Tick {
-    pub fn new() -> Tick {
-        Tick { value: 0 }
+    pub fn new() -> Self {
+        Self { value: 0 }
     }
     pub fn increase(&mut self) {
         self.value += 1;
@@ -18,6 +19,7 @@ impl Tick {
                 schedule!();
             }
         }
+        Timer::check(self.value);
     }
     pub fn get(&self) -> usize {
         self.value
