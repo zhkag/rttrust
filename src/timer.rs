@@ -32,7 +32,7 @@ impl Timer {
         self.timeout_tick = tick!(get()) + self.init_tick;
         let timer_list = system!(timer_list_mut());
         if timer_list.isempty() {
-            timer_list.push_front(&mut self.list);
+            timer_list.insert_after(&mut self.list);
         }
         for node in timer_list.iter_mut() {
             let timer = Self::list_to_timer(node);
