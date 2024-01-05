@@ -16,11 +16,16 @@ pub struct Scheduler{
 impl Scheduler {
     pub fn new() -> Self {
         let scheduler = Self{
-            priority_table:[List::init();THREAD_PRIORITY_MAX],
+            priority_table:[List::new();THREAD_PRIORITY_MAX],
             ready_priority_group:0,
             current_thread:None
         };
         scheduler
+    }
+    pub fn init(&mut self){
+        for value in 0..THREAD_PRIORITY_MAX{
+            self.priority_table[value].init();
+        }
     }
 
     // pub fn current_thread(&self)->Option<&Thread>{
@@ -116,8 +121,6 @@ impl Scheduler {
     }
     pub fn set_current_thread(&mut self, thread:Option<*mut Thread>){
         self.current_thread = thread;
-    }
-    pub fn init(&self) {
     }
 
     fn get_highest_priority_thread_mut(&mut self,highest_prio: &mut u8) -> &mut Thread {

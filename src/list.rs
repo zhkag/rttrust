@@ -6,11 +6,14 @@ pub struct List<T> {
 }
 
 impl<T> List<T> {
-    pub fn init() -> Self {
-        let mut list = List{next: core::ptr::null_mut(), prev: core::ptr::null_mut()};
-        list.prev = &mut list as *mut Self;
-        list.next = &mut list as *mut Self;
+    pub fn new() -> Self {
+        let list = List{next: core::ptr::null_mut(), prev: core::ptr::null_mut()};
         list
+    }
+    pub fn init(&mut self) -> &mut Self {
+        self.prev = self as *mut Self;
+        self.next = self as *mut Self;
+        self
     }
 
     pub fn insert_after(&mut self, node: &mut Self) {
