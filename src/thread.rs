@@ -71,7 +71,7 @@ impl Thread {
             stack_addr:stack_start,
             stack_size,
             sp:core::ptr::null_mut(),
-            list:List::init(),
+            list:List::new(),
             init_priority:priority,
             current_priority:priority,
             number_mask: 1 << priority,
@@ -106,6 +106,7 @@ impl Thread {
     pub fn init(thread: &mut Option<Self>, entry: fn(*mut ()), parameter:*mut (),
                 stack_start:*mut (), stack_size:u32, priority:u8, tick:u8) -> &mut Self{
         *thread = Some(Self::new(entry, parameter, stack_start, stack_size, priority, tick));
+        thread.as_mut().unwrap().list_mut().init();
         thread.as_mut().unwrap()
     }
 

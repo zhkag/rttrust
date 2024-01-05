@@ -36,7 +36,7 @@ impl System {
         let systerm = Self{
             scheduler:None,
             tick:Tick::new(),
-            timer_list:List::init(),
+            timer_list:List::new(),
         };
         systerm
     }
@@ -50,15 +50,19 @@ impl System {
     }
     fn init(&mut self)  {
         HardWare::board_init();
-        self.scheduler_init();
         self.main_app_init();
-        // rt_system_timer_init();
-        // rt_system_scheduler_init();
+        self.timer_init();
+        self.scheduler_init();
         crate::idle::rt_thread_idle_init();
+    }
+    
+    fn timer_init(&mut self) {
+        self.timer_list.init();
     }
 
     fn scheduler_init(&mut self) {
         self.scheduler = Some(Scheduler::new());
+        self.scheduler_mut().init();
     }
 
     pub fn scheduler_mut(&mut self) ->&mut Scheduler {
