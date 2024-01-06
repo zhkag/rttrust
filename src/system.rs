@@ -50,9 +50,9 @@ impl System {
     }
     fn init(&mut self)  {
         HardWare::board_init();
-        self.main_app_init();
         self.timer_init();
         self.scheduler_init();
+        self.main_app_init();
         crate::idle::rt_thread_idle_init();
     }
     
