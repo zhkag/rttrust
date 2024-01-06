@@ -56,24 +56,25 @@ impl<T> List<T> {
     pub fn iter_mut(&mut self) -> LinkedListIteratorMut<T> {
         LinkedListIteratorMut {
             head:self,
-            current: self,
+            prev: self.prev,
         }
     }
     
 }
 
 pub struct LinkedListIteratorMut<T> {
-    head:*mut List<T>,
-    current: *mut List<T>,
+    head: *mut List<T>,
+    prev: *mut List<T>,
 }
 
 impl<T> Iterator for LinkedListIteratorMut<T> {
     type Item = *mut List<T>;
     fn next(&mut self) -> Option<Self::Item> {
-        let current = unsafe {&mut *(self.current as Self::Item)}.next;
-        if current != self.head as Self::Item{
-            self.current = current;
-            return Some(current);
+        let current = unsafe {&mut *self.prev}.next;
+        let next = unsafe {&mut *current}.next;
+        if next != self.head as Self::Item{
+            self.prev = current;
+            return Some(next);
         }
         None
     }
