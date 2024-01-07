@@ -1,8 +1,8 @@
 use crate::thread::{Thread,Status};
 use crate::list::List;
-use crate::context;
 use crate::thread_self;
 use crate::scheduler;
+use crate::libcpu;
 
 const THREAD_PRIORITY_MAX: usize = 32;
 
@@ -35,7 +35,7 @@ impl Scheduler {
         if self.ready_priority_group == 0 {
             return;
         }
-        let level = context::rt_hw_interrupt_disable();
+        let level = libcpu::interrupt_disable();
          /* need_insert_from_thread: need to insert from_thread to ready queue */
         let mut need_insert_from_thread = false;
         let mut highest_ready_priority = 0;
@@ -71,14 +71,14 @@ impl Scheduler {
 
                 let from_sp = (from_thread.sp_mut()) as *mut *mut () as *mut ();
                 let to_sp = (to_thread.sp_mut()) as *mut *mut () as *mut ();
-                context::rt_hw_context_switch_interrupt(from_sp,to_sp,from_thread,to_thread);
+                libcpu::rt_hw_context_switch_interrupt(from_sp,to_sp,from_thread,to_thread);
 
             }else {
                 scheduler!(remove_thread(thread_self!().unwrap()));
                 current_thread.set_stat(Status::RUNNING as u8 | (current_thread.stat() & !(Status::STAT_MASK as u8)));
             }
         }
-        context::rt_hw_interrupt_enable(level);
+        libcpu::interrupt_enable(level);
 
     }
     // pub fn hardware(&self)->&HardWare{
@@ -143,7 +143,7 @@ impl Scheduler {
         to_thread.set_stat(Status::RUNNING as u8);
         scheduler!(set_current_thread(Some(to_thread)));
         let sp = to_thread.sp_mut() as *mut *mut () as *mut ();
-        context::rt_hw_context_switch_to(sp);
+        libcpu::rt_hw_context_switch_to(sp);
         unreachable!();
     }
 }

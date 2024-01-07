@@ -1,25 +1,16 @@
 #![no_main]
 #![no_std]
-mod system;
-mod scheduler;
-mod idle;
-mod global_asm;
-mod context;
-mod cpuport;
-mod hw;
-mod thread;
-mod list;
-mod tick;
-mod timer;
-mod kservice;
-
-use core::panic::PanicInfo;
-
-#[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
-    loop {}
-}
-
+use kernel::system;
+use kernel::scheduler;
+use kernel::idle;
+mod startup;
+use kernel::hw;
+use kernel::thread;
+use kernel::list;
+use kernel::tick;
+use kernel::timer;
+use kernel::kservice;
+use kernel::println;
 
 const TEST_THREAD_STACK_SIZE: usize = 1024;
 static mut TEST_THREAD_STACK: [u8; TEST_THREAD_STACK_SIZE] = [0; TEST_THREAD_STACK_SIZE];
@@ -77,6 +68,7 @@ fn sys_gpio_pin_set(p_gpiox: &mut GPIOTypeDef, pinx:u32, status:bool)
 }
 
 fn test(_parameter:*mut ()) {
+    #[cfg(feature = "bsptest")]
     println!("test thread");
     let mut _tick = tick!(get());
     let gpiof_base_ptr: *mut GPIOTypeDef = GPIOF_BASE as *mut GPIOTypeDef;
@@ -134,10 +126,3 @@ fn main() {
         }
     }
 }
-
-#[no_mangle]
-fn entry() {
-    system!(startup());
-    unreachable!();
-}
-

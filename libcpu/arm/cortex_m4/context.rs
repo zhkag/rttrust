@@ -1,9 +1,6 @@
-
 use core::arch::asm;
-use crate::cpuport;
-use crate::tick;
-use crate::thread::Thread;
 use core::arch::global_asm;
+use crate::arm::cortex_m4::cpuport;
 
 global_asm!(".equ  SCB_VTOR,           0xE000ED08");
 global_asm!(".equ  NVIC_INT_CTRL,      0xE000ED04");
@@ -12,14 +9,11 @@ global_asm!(".equ  NVIC_PENDSV_PRI,    0xFFFF0000");
 global_asm!(".equ  NVIC_PENDSVSET,     0x10000000");
 
 #[export_name = "rt_hw_interrupt_disable"]
-pub extern "C" fn rt_hw_interrupt_disable() -> isize{
-    let level:isize;
+pub extern "C" fn rt_hw_interrupt_disable(){
     unsafe{
         asm!("MRS     r0, PRIMASK");
         asm!("CPSID   I");
-        asm!("mov {}, r0", out(reg) level);
     }
-    level
 }
 
 #[export_name = "rt_hw_interrupt_enable"]
@@ -29,23 +23,8 @@ pub extern "C" fn rt_hw_interrupt_enable(_level:isize){
     }
 }
 
-#[export_name = "rt_hw_context_switch"]
-pub extern "C" fn rt_hw_context_switch(_from_sp: *mut (), _to_sp: *mut ()) {
-    unsafe{asm!("bl   rt_hw_context_switch_base");}
-}
-
-#[export_name = "rt_hw_context_switch_interrupt"]
-pub extern "C" fn rt_hw_context_switch_interrupt(_from_sp: *mut (), _to_sp: *mut (),_from_thread:&mut Thread,_to_thread:&mut Thread) {
-    unsafe{asm!("bl   rt_hw_context_switch_base");}
-}
-
-#[export_name = "rt_hw_context_switch_to"]
-pub extern "C" fn rt_hw_context_switch_to(_sp: *mut ()) {
-    unsafe{asm!("bl   rt_hw_context_switch_to_base");}
-}
-
 #[no_mangle]
-unsafe extern "C" fn rt_hw_context_switch_base(_from_sp: *mut (), _to_sp: *mut (),_from_thread:&mut Thread,_to_thread:&mut Thread) {
+unsafe extern "C" fn rt_hw_context_switch_base() {
     asm!("LDR   r2, ={}",sym cpuport::RT_THREAD_SWITCH_INTERRUPT_FLAG);
     asm!("LDR   r3, [r2]");
     asm!("CMP   r3, #1");
@@ -66,7 +45,7 @@ unsafe extern "C" fn rt_hw_context_switch_base(_from_sp: *mut (), _to_sp: *mut (
 }
 
 #[no_mangle]
-unsafe extern "C" fn rt_hw_context_switch_to_base(_sp: *mut ()) {
+unsafe extern "C" fn rt_hw_context_switch_to_base() {
     asm!("LDR   r1, ={}",sym cpuport::RT_INTERRUPT_TO_THREAD);
     asm!("STR   r0, [r1]");
     asm!("MRS   r2, CONTROL");
@@ -99,7 +78,7 @@ unsafe extern "C" fn rt_hw_context_switch_to_base(_sp: *mut ()) {
 
 #[export_name = "SysTick_Handler"]
 unsafe extern "C" fn sys_tick_handler() {
-    tick!(increase());
+    asm!("bl kernel_sys_tick");
 }
 
 #[export_name = "PendSV_Handler"]
