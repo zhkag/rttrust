@@ -3,6 +3,22 @@ pub struct HardWare {
     
 }
 
+const PERIPH_BASE: u32 = 0x40000000;
+const APB1PERIPH_BASE: u32 = PERIPH_BASE;
+const APB2PERIPH_BASE: u32 = PERIPH_BASE + 0x00010000;
+const AHB1PERIPH_BASE: u32 = PERIPH_BASE + 0x00020000;
+const PWR_BASE: u32 = APB1PERIPH_BASE + 0x7000;
+const USART1_BASE: u32 = APB2PERIPH_BASE + 0x1000;
+const RCC_BASE: u32 = AHB1PERIPH_BASE + 0x3800;
+const GPIOA_BASE: u32 = AHB1PERIPH_BASE + 0x0000;
+const GPIOF_BASE: u32 = AHB1PERIPH_BASE + 0x1400;
+const FLASH_R_BASE: u32 = AHB1PERIPH_BASE + 0x3C00;
+const AHB1ENR: u32 = RCC_BASE + 0x30;
+
+
+const SCS_BASE: u32 = 0xE000E000;
+const SYS_TICK_BASE: u32 = SCS_BASE + 0x0010;
+
 
 #[repr(C)]
 struct ExceptionStackFrame {
@@ -29,10 +45,6 @@ struct StackFrame {
     exception_stack_frame: ExceptionStackFrame,
 }
 
-
-const SCS_BASE: u32 = 0xE000E000;
-const SYS_TICK_BASE: u32 = SCS_BASE + 0x0010;
-
 #[repr(C)]
 struct SysTickType {
     ctrl:u32,
@@ -52,7 +64,7 @@ fn systick_init() {
 }
 
 #[repr(C)]
-struct RCCTypeDef {
+struct RccTypeDef {
     cr:u32,            //< RCC clock control register,                                  Address offset: 0x00 */
     pllcfgr:u32,       //< RCC PLL configuration register,                              Address offset: 0x04 */
     cfgr:u32,          //< RCC clock configuration register,                            Address offset: 0x08 */
@@ -86,7 +98,7 @@ struct RCCTypeDef {
 }
 
 #[repr(C)]
-struct FLASHTypeDef {
+struct FlashTypeDef {
     acr:u32,       //< FLASH access control register,   Address offset: 0x00 */
     keyr:u32,      //< FLASH key register,              Address offset: 0x04 */
     optkeyr:u32,   //< FLASH option key register,       Address offset: 0x08 */
@@ -97,19 +109,15 @@ struct FLASHTypeDef {
 }
 
 #[repr(C)]
-struct PWRTypeDef{
+struct PwrTypeDef {
     cr:u32,   //< PWR power control register,        Address offset: 0x00 */
     csr:u32,  //< PWR power control/status register, Address offset: 0x04 */
 }
 
-const RCC_BASE: u32 = 0x40023800;
-const FLASH_R_BASE: u32 = 0x40023C00;
-const PWR_BASE: u32 = 0x40007000;
-
 fn sys_clock_set(plln:u32, pllm:u32, pllp:u32, pllq:u32) -> u8{
-    let rcc = unsafe {&mut *(RCC_BASE as *mut RCCTypeDef)};
-    let flash = unsafe {&mut *(FLASH_R_BASE as *mut FLASHTypeDef)};
-    let pwr = unsafe {&mut *(PWR_BASE as *mut PWRTypeDef)};
+    let rcc = unsafe {&mut *(RCC_BASE as *mut RccTypeDef)};
+    let flash = unsafe {&mut *(FLASH_R_BASE as *mut FlashTypeDef)};
+    let pwr = unsafe {&mut *(PWR_BASE as *mut PwrTypeDef)};
     let mut retry:u32 = 0;
     let mut retval:u8 = 0;
     let mut swsval:u8 = 0;
@@ -172,8 +180,9 @@ fn sys_clock_set(plln:u32, pllm:u32, pllp:u32, pllq:u32) -> u8{
     return retval;
 
 }
+
 fn clock_init(){
-    let rcc = unsafe {&mut *(RCC_BASE as *mut RCCTypeDef)};
+    let rcc = unsafe {&mut *(RCC_BASE as *mut RccTypeDef)};
     rcc.cr = 0x00000001;           /* 设置HISON, 开启内部高速RC振荡，其他位全清零 */
     rcc.cfgr = 0x00000000;         /* CFGR清零 */
     rcc.pllcfgr = 0x00000000;      /* PLLCFGR清零 */
@@ -181,11 +190,124 @@ fn clock_init(){
     sys_clock_set(336, 8, 2, 7);
 }
 
+#[repr(C)]
+struct GPIOTypeDef
+{
+    moder:u32,
+    otyper:u32,
+    ospeedr:u32,
+    pupdr:u32,
+    idr:u32,
+    odr:u32,
+    bsrr:u32,
+    lckr:u32,
+    afr:[u32;2],
+}
+
+fn sys_gpio_set(p_gpiox: &mut GPIOTypeDef, pinx:u16, mode:u32, otype:u32, ospeed:u32, pupd:u32) {
+    let mut pos:u32;
+    let mut curpin:u32;
+    for pinpos in 0..16 {
+        pos = 1 << pinpos;
+        curpin = (pinx as u32) & pos;
+        if curpin == pos {
+            p_gpiox.moder &= !(3 << (pinpos * 2));
+            p_gpiox.moder |= mode << (pinpos * 2);
+            if (mode == 1) || (mode == 2) {
+                p_gpiox.ospeedr &= !(3 << (pinpos * 2));
+                p_gpiox.ospeedr |= ospeed << (pinpos * 2);
+                p_gpiox.otyper &= !(1 << pinpos);
+                p_gpiox.otyper |= otype << pinpos;
+            }
+            p_gpiox.pupdr &= !(3 << (pinpos * 2));
+            p_gpiox.pupdr |= pupd << (pinpos * 2);
+        }
+    }
+}
+
+fn sys_gpio_pin_set(p_gpiox: &mut GPIOTypeDef, pinx:u32, status:bool)
+{
+    if status {
+        p_gpiox.bsrr |= pinx;
+    }
+    else {
+        p_gpiox.bsrr |= pinx << 16;
+    }
+}
+
+fn sys_gpio_af_set(p_gpiox: &mut GPIOTypeDef, pinx:u32, afx:u32)
+{
+    let mut pos:u32;
+    let mut curpin: u32;
+    for pinpos in 0..16 {
+        pos = 1 << pinpos;      /* 一个个位检查 */
+        curpin = pinx & pos;    /* 检查引脚是否要设置 */
+
+        if curpin == pos{
+            p_gpiox.afr[pinpos >> 3] &= !(0x0F << ((pinpos & 0x07) * 4));
+            p_gpiox.afr[pinpos >> 3] |= afx << ((pinpos & 0x07) * 4);
+        }
+    }
+}
+
+#[repr(C)]
+struct UsartTypeDef {
+    sr:u32,         //< USART Status register,                   Address offset: 0x00 */
+    dr:u32,         //< USART Data register,                     Address offset: 0x04 */
+    brr:u32,        //< USART Baud rate register,                Address offset: 0x08 */
+    cr1:u32,        //< USART Control register 1,                Address offset: 0x0C */
+    cr2:u32,        //< USART Control register 2,                Address offset: 0x10 */
+    cr3:u32,        //< USART Control register 3,                Address offset: 0x14 */
+    gtpr:u32,       //< USART Guard time and prescaler register, Address offset: 0x18 */
+}
+
+fn usart_init(){
+    let rcc = unsafe {&mut *(RCC_BASE as *mut RccTypeDef)};
+    let usart1 = unsafe {&mut *(USART1_BASE as *mut UsartTypeDef)};
+    let sclk:u32 = 84;
+    let baudrate:u32 = 115200;
+
+    /* IO 及 时钟配置 */
+    rcc.ahb1enr |= 1 << 0;      /* 使能串口TX脚时钟 */
+    rcc.ahb1enr |= 1 << 0;      /* 使能串口RX脚时钟 */
+    rcc.apb2enr |= 1 << 4;      /* 使能串口时钟 */
+    
+    let gpioa_base = unsafe { &mut *(GPIOA_BASE as *mut GPIOTypeDef)};
+
+    sys_gpio_set(gpioa_base, 1 << 9, 2, 0, 1, 1);    /* 串口TX脚 模式设置 */
+    sys_gpio_set(gpioa_base, 1 << 10, 2, 0, 1, 1);    /* 串口RX脚 模式设置 */
+
+    sys_gpio_af_set(gpioa_base, 1 << 9, 7);    /* TX脚 复用功能选择, 必须设置正确 */
+    sys_gpio_af_set(gpioa_base, 1 << 10, 7);    /* RX脚 复用功能选择, 必须设置正确 */
+
+    let temp:u32 = (sclk * 1000000 + baudrate / 2) / baudrate;              /* 得到USARTDIV@OVER8 = 0, 采用四舍五入计算 */
+    /* 波特率设置 */
+    usart1.brr = temp;       /* 波特率设置@OVER8 = 0 */
+    usart1.cr1 = 0;          /* 清零CR1寄存器 */
+    usart1.cr1 |= 0 << 12;   /* 设置M = 0, 选择8位字长 */
+    usart1.cr1 |= 0 << 15;   /* 设置OVER8 = 0, 16倍过采样 */
+    usart1.cr1 |= 1 << 3;    /* 串口发送使能 */
+    /* 使能接收中断 */
+    usart1.cr1 |= 1 << 2;    /* 串口接收使能 */
+    usart1.cr1 |= 1 << 5;    /* 接收缓冲区非空中断使能 */
+    // sys_nvic_init(3, 3, USART_UX_IRQn, 2); /* 组2，最低优先级 */
+    
+    usart1.cr1 |= 1 << 13;   /* 串口使能 */
+
+}
+
+pub fn putc(ch:char)
+{
+    let usart1 = unsafe {&mut *(USART1_BASE as *mut UsartTypeDef)};
+    while (usart1.sr & 0x40) == 0{}     /* 等待上一个字符发送完成 */
+    usart1.dr = ch as u32;
+}
 
 impl HardWare {
     pub fn board_init() {
         clock_init();
         systick_init();
+        usart_init();
     }
     pub fn stack_init(entry: fn(*mut ()), parameter:*mut (),stack_addr:*mut (),exit: fn())->*mut (){
         let mut stk: *mut () = (stack_addr as usize + core::mem::size_of::<u32>()) as *mut ();

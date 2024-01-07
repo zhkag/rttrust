@@ -11,6 +11,7 @@ mod thread;
 mod list;
 mod tick;
 mod timer;
+mod kservice;
 
 use core::panic::PanicInfo;
 
@@ -76,6 +77,7 @@ fn sys_gpio_pin_set(p_gpiox: &mut GPIOTypeDef, pinx:u32, status:bool)
 }
 
 fn test(_parameter:*mut ()) {
+    println!("test thread");
     let mut _tick = tick!(get());
     let gpiof_base_ptr: *mut GPIOTypeDef = GPIOF_BASE as *mut GPIOTypeDef;
     let gpiof_base = unsafe { &mut *gpiof_base_ptr};
