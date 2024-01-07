@@ -53,6 +53,16 @@ impl Timer {
     }
 
     pub fn check(tick:usize){
+        let timer_list = system!(timer_list_mut());
+        let mut current = timer_list as *mut List<Self>;
+        for node in timer_list.iter_mut() {
+            current = node;
+            let timer = Self::list_to_timer(node);
+            timer.list_mut().remove();
+            if tick > timer.timeout_tick {
+                (timer.timeout_func)(timer.parameter);
+            }
+        }
 
     }
 }
