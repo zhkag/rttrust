@@ -7,7 +7,7 @@ authors = ["zhangkang <zhangkang@rt-thread.com>"]
 
 [[bin]]
 name = "rtthread"
-path = "applications/main.rs"
+path = "bin.rs"
 
 [dependencies]
 kernel = { path = "../../.." }
