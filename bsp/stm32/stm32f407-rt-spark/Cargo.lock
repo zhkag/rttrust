@@ -12,3 +12,10 @@ dependencies = [
 [[package]]
 name = "libcpu"
 version = "0.1.0"
+
+[[package]]
+name = "rt-spark"
+version = "0.1.0"
+dependencies = [
+ "kernel",
+]

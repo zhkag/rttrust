@@ -1,4 +1,3 @@
-use crate::main;
 use crate::scheduler::Scheduler;
 use crate::hw::HardWare;
 use crate::thread::Thread;
@@ -9,7 +8,7 @@ use crate::timer::Timer;
 static mut SYSTREM: Option<System> = None;
 
 fn main_fun(_parameter:*mut ()) {
-    main();
+    unsafe{core::arch::asm!("bl main");}
 }
 
 const MAIN_THREAD_STACK_SIZE: usize = 1024;
