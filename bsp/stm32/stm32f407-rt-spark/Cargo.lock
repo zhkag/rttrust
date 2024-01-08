@@ -3,6 +3,13 @@
 version = 3
 
 [[package]]
+name = "components"
+version = "0.1.0"
+dependencies = [
+ "kernel",
+]
+
+[[package]]
 name = "kernel"
 version = "0.1.0"
 dependencies = [
@@ -17,5 +24,6 @@ version = "0.1.0"
 name = "rt-spark"
 version = "0.1.0"
 dependencies = [
+ "components",
  "kernel",
 ]

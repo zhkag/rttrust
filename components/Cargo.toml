@@ -1,0 +1,13 @@
+[package]
+name = "components"
+version = "0.1.0"
+edition = "2021"
+readme = "README.md"
+authors = ["zhangkang <zhangkang@rt-thread.com>"]
+
+
+[lib]
+path = "lib.rs"
+
+[dependencies]
+kernel = { path = "../" }

@@ -1,25 +1,3 @@
-#![no_main]
-#![no_std]
-
-mod board;
-mod applications;
-mod drivers;
-
-use kernel::system;
-use kernel::scheduler;
-use kernel::idle;
-use kernel::hw;
-use kernel::thread;
-use kernel::list;
-use kernel::tick;
-use kernel::timer;
-use kernel::kservice;
-use kernel::println;
-
-const TEST_THREAD_STACK_SIZE: usize = 1024;
-static mut TEST_THREAD_STACK: [u8; TEST_THREAD_STACK_SIZE] = [0; TEST_THREAD_STACK_SIZE];
-static mut TEST_THREAD: Option<thread::Thread> = None;
-
 const PERIPH_BASE: u32 = 0x40000000;
 const AHB1PERIPH_BASE: u32 = PERIPH_BASE + 0x00020000;
 const RCC_BASE: u32 = AHB1PERIPH_BASE + 0x3800;
@@ -69,27 +47,4 @@ fn sys_gpio_pin_set(p_gpiox: &mut GPIOTypeDef, pinx:u32, status:bool)
     else {
         p_gpiox.bsrr |= pinx << 16;
     }
-}
-
-fn test(_parameter:*mut ()) {
-    #[cfg(feature = "bsptest")]
-    println!("test thread");
-    let mut _tick = tick!(get());
-    let gpiof_base_ptr: *mut GPIOTypeDef = GPIOF_BASE as *mut GPIOTypeDef;
-    let gpiof_base = unsafe { &mut *gpiof_base_ptr};
-    let mut led_num = 0;
-    loop {
-        led_num += 1;
-        if led_num % 100000 == 0{
-            gpiof_base.odr ^= 1 << 11;
-            led_num = 0
-        }
-    }
-}
-
-use crate::timer::Timer;
-
-static mut TEST_TIMER: Option<Timer> = None;
-fn timer_timeout(parameter:*mut ()) {
-    let mut led_num = 0;
 }
