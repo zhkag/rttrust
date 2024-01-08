@@ -15,7 +15,7 @@ impl Tick {
         self.value += 1;
         if let Some(thread) = thread_self!() {
             if thread.tick_decrease() == 0 {
-                thread.set_stat(thread.stat() | Status::STAT_YIELD as u8);
+                thread.set_stat(thread.stat() | Status::StatYield as u8);
                 schedule!();
             }
         }

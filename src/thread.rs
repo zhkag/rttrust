@@ -9,19 +9,20 @@ use crate::thread_self;
 // #[derive(PartialEq)]
 #[derive(Copy, Clone)]
 pub enum Status {
-    INIT        = 0x00,     // Initialized status
-    CLOSE       = 0x01,     // Closed status
-    READY       = 0x02,     // Ready status
-    RUNNING     = 0x03,     // Running status
-    SUSPEND_MASK= 0x04,
-    STAT_MASK   = 0x07,
-    STAT_YIELD  = 0x08,     // indicate whether remaining_tick has been reloaded since last schedule
+    Init        = 0x00,     // Initialized status
+    Close       = 0x01,     // Closed status
+    Ready       = 0x02,     // Ready status
+    Running     = 0x03,     // Running status
+    SuspendMask = 0x04,
+    StatMask    = 0x07,
+    StatYield   = 0x08,     // indicate whether remaining_tick has been reloaded since last schedule
+
 }
 
 impl Status {
-    const SUSPEND_INTERRUPTIBLE: Status = Status::SUSPEND_MASK;
+    const SUSPEND_INTERRUPTIBLE: Status = Status::SuspendMask;
     const SUSPEND: Status = Status::SUSPEND_INTERRUPTIBLE;
-    pub const STAT_YIELD_MASK: Status = Status::STAT_YIELD;
+    pub const STAT_YIELD_MASK: Status = Status::StatYield;
 }
 
 // impl BitAnd for Status {
@@ -75,7 +76,7 @@ impl Thread {
             init_priority:priority,
             current_priority:priority,
             number_mask: 1 << priority,
-            stat:Status::INIT as u8,
+            stat:Status::Init as u8,
             init_tick:tick,
             remaining_tick:tick,
             thread_timer:None,
@@ -99,7 +100,7 @@ impl Thread {
     fn thread_exit()
     {
         if let Some(thread) = thread_self!() {
-            thread.stat = Status::INIT as u8;
+            thread.stat = Status::Init as u8;
         }
         schedule!();
     }
@@ -122,7 +123,7 @@ impl Thread {
     }
     
     fn resume(&mut self){
-        if (self.stat & Status::SUSPEND_MASK as u8) != Status::SUSPEND_MASK as u8{
+        if (self.stat & Status::SuspendMask as u8) != Status::SuspendMask as u8{
             return;
         }
         scheduler!(insert_thread(self));

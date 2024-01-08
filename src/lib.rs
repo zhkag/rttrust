@@ -1,5 +1,6 @@
 #![no_main]
 #![no_std]
+mod object;
 pub mod system;
 pub mod scheduler;
 pub mod idle;
