@@ -42,7 +42,7 @@ impl Scheduler {
         let mut to_thread = self.get_highest_priority_thread_mut(&mut highest_ready_priority);
         let current_thread = thread_self!().unwrap();
 
-        if (current_thread.stat() & Status::STAT_MASK as u8) == Status::RUNNING as u8 {
+        if (current_thread.stat() & Status::StatMask as u8) == Status::Running as u8 {
             if current_thread.current_priority() < highest_ready_priority {
                 to_thread = current_thread;
             }
@@ -67,7 +67,7 @@ impl Scheduler {
                 }
 
                 scheduler!(remove_thread(to_thread));
-                to_thread.set_stat(Status::RUNNING as u8 | (to_thread.stat() & !(Status::STAT_MASK as u8)));
+                to_thread.set_stat(Status::Running as u8 | (to_thread.stat() & !(Status::StatMask as u8)));
 
                 let from_sp = (from_thread.sp_mut()) as *mut *mut () as *mut ();
                 let to_sp = (to_thread.sp_mut()) as *mut *mut () as *mut ();
@@ -75,7 +75,7 @@ impl Scheduler {
 
             }else {
                 scheduler!(remove_thread(thread_self!().unwrap()));
-                current_thread.set_stat(Status::RUNNING as u8 | (current_thread.stat() & !(Status::STAT_MASK as u8)));
+                current_thread.set_stat(Status::Running as u8 | (current_thread.stat() & !(Status::StatMask as u8)));
             }
         }
         libcpu::interrupt_enable(level);
@@ -90,12 +90,12 @@ impl Scheduler {
         // let level = context::rt_hw_interrupt_disable();
         if let Some(current_thread) = self.current_thread() {
             if thread == current_thread {
-                thread.set_stat(Status::RUNNING as u8|thread.stat() & !(Status::STAT_MASK as u8));
+                thread.set_stat(Status::Running as u8|thread.stat() & !(Status::StatMask as u8));
                 // context::rt_hw_interrupt_enable(level);
                 return;
             }
         }
-        thread.set_stat(Status::READY as u8 | (thread.stat() & !(Status::STAT_MASK as u8)));
+        thread.set_stat(Status::Ready as u8 | (thread.stat() & !(Status::StatMask as u8)));
         if (thread.stat() & (Status::STAT_YIELD_MASK as u8)) != 0 {
             self.priority_table[thread.current_priority() as usize].insert_before(thread.list_mut());
         }else {
@@ -140,7 +140,7 @@ impl Scheduler {
         let mut highest_ready_priority = 0;
         let to_thread = self.get_highest_priority_thread_mut(&mut highest_ready_priority);
         scheduler!(remove_thread(to_thread));
-        to_thread.set_stat(Status::RUNNING as u8);
+        to_thread.set_stat(Status::Running as u8);
         scheduler!(set_current_thread(Some(to_thread)));
         let sp = to_thread.sp_mut() as *mut *mut () as *mut ();
         libcpu::rt_hw_context_switch_to(sp);
