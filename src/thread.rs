@@ -1,4 +1,5 @@
 use crate::hw::HardWare;
+use crate::object::Object;
 use crate::timer::Timer;
 use crate::{scheduler,schedule};
 use crate::list::List;
@@ -48,6 +49,7 @@ impl Status {
 #[derive(Copy, Clone)]
 pub struct Thread
 {
+    parent:Object,
     sp: *mut (),
     entry:fn(*mut ()),
     parameter: *mut (),
@@ -67,6 +69,7 @@ impl Thread {
     fn new(entry: fn(*mut ()), parameter:*mut (), stack_start:*mut (), 
            stack_size:u32, priority:u8, tick:u8) -> Self {
         let mut thread = Self {
+            parent:Object::new(),
             entry,
             parameter,
             stack_addr:stack_start,
@@ -104,11 +107,13 @@ impl Thread {
         }
         schedule!();
     }
-    pub fn init(thread: &mut Option<Self>, entry: fn(*mut ()), parameter:*mut (),
-                stack_start:*mut (), stack_size:u32, priority:u8, tick:u8) -> &mut Self{
+    pub fn init<'a>(thread: &'a mut Option<Self>, name:&'a str, entry: fn(*mut ()), parameter:*mut (),
+                stack_start:*mut (), stack_size:u32, priority:u8, tick:u8) -> &'a mut Self{
         *thread = Some(Self::new(entry, parameter, stack_start, stack_size, priority, tick));
-        thread.as_mut().unwrap().list_mut().init();
-        thread.as_mut().unwrap()
+        let thread_mut = thread.as_mut().unwrap();
+        thread_mut.parent.init(crate::object::ObjectClassType::Thread, name);
+        thread_mut.list_mut().init();
+        thread_mut
     }
 
     pub fn sp_mut(&mut self) ->&mut *mut (){

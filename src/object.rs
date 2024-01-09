@@ -34,17 +34,37 @@ pub struct ObjectInformation
     object_size:u16,
 }
 
+#[derive(PartialEq)]
 #[derive(Copy, Clone)]
 pub struct Object
 {
     name:[char;8],                    
-    r#type:u8,                              
+    r#type:ObjectClassType,                              
     flag:u8,                              
     list:List<Self>,
 }
 
 impl Object {
-    fn init(&mut self, r#type:ObjectClassType,name:&str) {
+    pub fn new() -> Self{
+        let object = Self{
+            name: [' '; 8],
+            r#type: ObjectClassType::Null,
+            flag: 0,
+            list: List::new(), 
+        };
+        object 
+    }
+    pub fn init(&mut self, r#type:ObjectClassType, name:&str) {
+        self.r#type = r#type;
+        self.list.init();
+        self.name = {
+            let mut arr: [char; 8] = [' '; 8];
+            for (i, c) in name.chars().take(8).enumerate() {
+                arr[i] = c;
+            }
+            arr
+        };
+
         if let Some(information) = system!(object_get_information(r#type)) {
             information.object_list.insert_after(&mut self.list);
         }
