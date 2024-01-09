@@ -1,3 +1,4 @@
+use crate::object::ObjectInformation;
 use crate::scheduler::Scheduler;
 use crate::hw::HardWare;
 use crate::thread::Thread;
@@ -19,6 +20,7 @@ pub struct System{
     scheduler:Option<Scheduler>,
     tick:Tick,
     timer_list:List<Timer>,
+    pub(crate) object_container:[ObjectInformation; 8],
 }
 
 impl System {
@@ -36,6 +38,7 @@ impl System {
             scheduler:None,
             tick:Tick::new(),
             timer_list:List::new(),
+            object_container:[ObjectInformation::new();8],
         };
         systerm
     }
@@ -49,6 +52,7 @@ impl System {
     }
     fn init(&mut self)  {
         HardWare::board_init();
+        self.object_container_init();
         self.timer_init();
         self.scheduler_init();
         self.main_app_init();

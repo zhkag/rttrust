@@ -1,6 +1,10 @@
 use crate::list::List;
+use crate::system::System;
+use crate::thread::Thread;
+use crate::system;
 
-
+#[derive(PartialEq)]
+#[derive(Copy, Clone)]
 pub enum ObjectClassType
 {
     Null          = 0x00,
@@ -22,6 +26,15 @@ pub enum ObjectClassType
     Static        = 0x80,
 }
 
+#[derive(Copy, Clone)]
+pub struct ObjectInformation
+{
+    object_class_type:ObjectClassType,
+    object_list:List<Object>,
+    object_size:u16,
+}
+
+#[derive(Copy, Clone)]
 pub struct Object
 {
     name:[char;8],                    
@@ -29,3 +42,46 @@ pub struct Object
     flag:u8,                              
     list:List<Self>,
 }
+
+impl Object {
+    fn init(&mut self, r#type:ObjectClassType,name:&str) {
+        if let Some(information) = system!(object_get_information(r#type)) {
+            information.object_list.insert_after(&mut self.list);
+        }
+    }
+}
+
+impl ObjectInformation {
+    pub fn new() -> Self {
+        let information = ObjectInformation{
+            object_class_type: ObjectClassType::Null, 
+            object_list: List::new(),
+            object_size: 0,
+        };
+        information
+    }
+    pub fn init(&mut self) -> &mut Self{
+        self.object_list.init();
+        self
+    }
+}
+
+impl System {
+    pub(crate) fn object_container_init(&mut self) {
+        let mut num = 0;
+
+        self.object_container[num].init();
+        self.object_container[num].object_class_type = ObjectClassType::Thread;
+        self.object_container[num].object_size =  core::mem::size_of::<Thread>().try_into().unwrap();
+        num += 1;
+    }
+    fn object_get_information(&mut self,r#type:ObjectClassType) -> Option<&mut ObjectInformation>{
+        for index in 0..8 {
+            if self.object_container[index].object_class_type == r#type {
+                return Some(&mut self.object_container[index]);
+            }
+        }
+        return None;
+    }
+}
+
