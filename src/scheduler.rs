@@ -87,11 +87,11 @@ impl Scheduler {
 
     
     pub fn insert_thread(&mut self,thread:&mut Thread){
-        // let level = context::rt_hw_interrupt_disable();
+        let level = libcpu::interrupt_disable();
         if let Some(current_thread) = self.current_thread() {
             if thread == current_thread {
                 thread.set_stat(Status::Running as u8|thread.stat() & !(Status::StatMask as u8));
-                // context::rt_hw_interrupt_enable(level);
+                libcpu::interrupt_enable(level);
                 return;
             }
         }
@@ -102,15 +102,15 @@ impl Scheduler {
             self.priority_table[thread.current_priority() as usize].insert_after(thread.list_mut());
         }
         self.ready_priority_group |= thread.number_mask() as usize;
-        // context::rt_hw_interrupt_enable(level);
+        libcpu::interrupt_enable(level);
     }
     pub fn remove_thread(&mut self, thread:&mut Thread){
-        // let level = context::rt_hw_interrupt_disable();
+        let level = libcpu::interrupt_disable();
         thread.list_mut().remove();
         if self.priority_table[thread.current_priority() as usize].isempty() {
             self.ready_priority_group &= !(thread.number_mask() as usize);
         }
-        // context::rt_hw_interrupt_enable(level);
+        libcpu::interrupt_enable(level);
     }
 
     pub fn current_thread(&mut self) -> Option<&mut Thread> {

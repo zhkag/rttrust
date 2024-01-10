@@ -84,12 +84,6 @@ impl Thread {
             remaining_tick:tick,
             thread_timer:None,
         };
-        let ptr = thread.stack_addr as u32;
-        thread.sp = HardWare::stack_init(thread.entry, thread.parameter,
-                             (ptr+thread.stack_size-16)as *mut (), Self::thread_exit);
-        
-        let timer_parameter = thread.as_mut_ptr() as *mut ();
-        let _timer = Timer::init(&mut thread.thread_timer, Self::thread_timeout, timer_parameter, 0, 0);
         thread
     }
     fn as_mut_ptr(&mut self) -> *mut Self {
@@ -112,6 +106,14 @@ impl Thread {
         *thread = Some(Self::new(entry, parameter, stack_start, stack_size, priority, tick));
         let thread_mut = thread.as_mut().unwrap();
         thread_mut.parent.init(crate::object::ObjectClassType::Thread, name);
+
+        let ptr = thread_mut.stack_addr as u32;
+        thread_mut.sp = HardWare::stack_init(thread_mut.entry, thread_mut.parameter,
+                             (ptr+thread_mut.stack_size-16)as *mut (), Self::thread_exit);
+
+        let timer_parameter = thread_mut.as_mut_ptr() as *mut ();
+        Timer::init(&mut thread_mut.thread_timer, Self::thread_timeout, timer_parameter, 0, 0);
+        
         thread_mut.list_mut().init();
         thread_mut
     }

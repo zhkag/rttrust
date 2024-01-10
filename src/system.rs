@@ -1,4 +1,4 @@
-use crate::object::ObjectInformation;
+use crate::object::{ObjectInformation,ObjectClassType};
 use crate::scheduler::Scheduler;
 use crate::hw::HardWare;
 use crate::thread::Thread;
@@ -20,16 +20,19 @@ pub struct System{
     scheduler:Option<Scheduler>,
     tick:Tick,
     timer_list:List<Timer>,
-    pub(crate) object_container:[ObjectInformation; 8],
+    pub(super) object_container:[ObjectInformation; 8],
 }
 
 impl System {
     pub fn global_mut() -> &'static mut Self{
         unsafe {
-            if (&mut SYSTREM).is_none(){
+            if SYSTREM.is_none(){
                 SYSTREM = Some(Self::new());
             }
-            return SYSTREM.as_mut().unwrap();
+            match SYSTREM {
+                Some(ref mut x) => x,
+                None => unreachable!(),
+            }
         }
     }
 
@@ -58,7 +61,13 @@ impl System {
         self.main_app_init();
         crate::idle::rt_thread_idle_init();
     }
-    
+
+    fn object_container_init(&mut self) {
+        let mut num = 0;
+        self.object_container[num].init(ObjectClassType::Thread,core::mem::size_of::<Thread>().try_into().unwrap());
+        num += 1;
+    }
+
     fn timer_init(&mut self) {
         self.timer_list.init();
     }

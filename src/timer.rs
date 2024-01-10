@@ -1,6 +1,7 @@
 use crate::system;
 use crate::tick;
 use crate::list::List;
+use crate::libcpu;
 
 #[derive(PartialEq)]
 #[derive(Copy, Clone)]
@@ -53,6 +54,7 @@ impl Timer {
     }
 
     pub fn check(tick:usize){
+        let level = libcpu::interrupt_disable();
         let timer_list = system!(timer_list_mut());
         let mut current = timer_list as *mut List<Self>;
         for node in timer_list.iter_mut() {
@@ -63,7 +65,7 @@ impl Timer {
                 (timer.timeout_func)(timer.parameter);
             }
         }
-
+        libcpu::interrupt_enable(level);
     }
 }
 

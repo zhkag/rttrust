@@ -2,6 +2,7 @@ use crate::list::List;
 use crate::system::System;
 use crate::thread::Thread;
 use crate::system;
+use crate::libcpu;
 
 #[derive(PartialEq)]
 #[derive(Copy, Clone)]
@@ -64,10 +65,7 @@ impl Object {
             }
             arr
         };
-
-        if let Some(information) = system!(object_get_information(r#type)) {
-            information.object_list.insert_after(&mut self.list);
-        }
+        system!(install_object(r#type,&mut self.list));
     }
 }
 
@@ -80,28 +78,24 @@ impl ObjectInformation {
         };
         information
     }
-    pub fn init(&mut self) -> &mut Self{
+    pub fn init(&mut self, r#type:ObjectClassType, size:u16){
         self.object_list.init();
-        self
+        self.object_class_type = r#type;
+        self.object_size =  size;
     }
 }
 
 impl System {
-    pub(crate) fn object_container_init(&mut self) {
-        let mut num = 0;
-
-        self.object_container[num].init();
-        self.object_container[num].object_class_type = ObjectClassType::Thread;
-        self.object_container[num].object_size =  core::mem::size_of::<Thread>().try_into().unwrap();
-        num += 1;
-    }
-    fn object_get_information(&mut self,r#type:ObjectClassType) -> Option<&mut ObjectInformation>{
+    fn install_object(&mut self, r#type:ObjectClassType, list:&mut List<Object>){
+        let level = libcpu::interrupt_disable();
         for index in 0..8 {
             if self.object_container[index].object_class_type == r#type {
-                return Some(&mut self.object_container[index]);
+                self.object_container[index].object_list.insert_after(list);
+                libcpu::interrupt_enable(level);
+                return;
             }
         }
-        return None;
+        libcpu::interrupt_enable(level);
     }
 }
 
