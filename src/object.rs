@@ -39,7 +39,7 @@ pub struct ObjectInformation
 #[derive(Copy, Clone)]
 pub struct Object
 {
-    name:[char;8],                    
+    name:[u8;8],
     r#type:ObjectClassType,                              
     flag:u8,                              
     list:List<Self>,
@@ -48,7 +48,7 @@ pub struct Object
 impl Object {
     pub fn new() -> Self{
         let object = Self{
-            name: [' '; 8],
+            name: [b'\0'; 8],
             r#type: ObjectClassType::Null,
             flag: 0,
             list: List::new(), 
@@ -58,13 +58,13 @@ impl Object {
     pub fn init(&mut self, r#type:ObjectClassType, name:&str) {
         self.r#type = r#type;
         self.list.init();
-        // self.name = {
-        //     let mut arr: [char; 8] = [' '; 8];
-        //     for (i, c) in name.chars().take(8).enumerate() {
-        //         arr[i] = c;
-        //     }
-        //     arr
-        // };
+        for index in 0..8 {
+            if let Some(char) = name.as_bytes().get(index){
+                self.name[index] = *char;
+            }else {
+                break;
+            }
+        }
         system!(install_object(r#type,&mut self.list));
     }
 }
