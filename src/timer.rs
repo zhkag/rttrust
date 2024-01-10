@@ -30,6 +30,7 @@ impl Timer {
         timer.as_mut().unwrap()
     }
     pub fn start(&mut self){
+        let level = libcpu::interrupt_disable();
         self.timeout_tick = tick!(get()) + self.init_tick;
         let timer_list = system!(timer_list_mut());
         let mut current = timer_list as *mut List<Self>;
@@ -42,6 +43,7 @@ impl Timer {
             break;
         }
         unsafe{&mut *current}.insert_after(&mut self.list);
+        libcpu::interrupt_enable(level);
     }
 
     pub fn list_mut(&mut self) -> &mut List<Self> {

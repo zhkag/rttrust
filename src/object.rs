@@ -58,13 +58,13 @@ impl Object {
     pub fn init(&mut self, r#type:ObjectClassType, name:&str) {
         self.r#type = r#type;
         self.list.init();
-        self.name = {
-            let mut arr: [char; 8] = [' '; 8];
-            for (i, c) in name.chars().take(8).enumerate() {
-                arr[i] = c;
-            }
-            arr
-        };
+        // self.name = {
+        //     let mut arr: [char; 8] = [' '; 8];
+        //     for (i, c) in name.chars().take(8).enumerate() {
+        //         arr[i] = c;
+        //     }
+        //     arr
+        // };
         system!(install_object(r#type,&mut self.list));
     }
 }

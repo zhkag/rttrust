@@ -23,7 +23,7 @@ impl Tick {
             }
         }
         libcpu::interrupt_enable(level);
-        // Timer::check(self.value);
+        Timer::check(self.value);
     }
     pub fn get(&self) -> usize {
         self.value
