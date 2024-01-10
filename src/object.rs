@@ -1,6 +1,5 @@
 use crate::list::List;
 use crate::system::System;
-use crate::thread::Thread;
 use crate::system;
 use crate::libcpu;
 
@@ -27,6 +26,19 @@ pub enum ObjectClassType
     Static        = 0x80,
 }
 
+impl core::fmt::Display for ObjectClassType {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "Type:")?;
+        let str = match self {
+            Self::Null => "Null",
+            Self::Thread => "thread",
+            Self::Timer => "timer",
+            _ => "Unknown"
+        };
+        write!(f, "{}",str)
+    }
+}
+
 #[derive(Copy, Clone)]
 pub struct ObjectInformation
 {
@@ -43,6 +55,17 @@ pub struct Object
     r#type:ObjectClassType,                              
     flag:u8,                              
     list:List<Self>,
+}
+
+impl core::fmt::Display for Object {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "[")?;
+        for byte in self.name.iter() {
+            write!(f, "{}", *byte as char)?;
+        }
+        write!(f, " {}", self.r#type)?;
+        write!(f, "]")
+    }
 }
 
 impl Object {

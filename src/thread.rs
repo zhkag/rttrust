@@ -49,7 +49,7 @@ impl Status {
 #[derive(Copy, Clone)]
 pub struct Thread
 {
-    parent:Object,
+    pub(super) parent:Object,
     sp: *mut (),
     entry:fn(*mut ()),
     parameter: *mut (),
@@ -68,7 +68,7 @@ pub struct Thread
 impl Thread {
     fn new(entry: fn(*mut ()), parameter:*mut (), stack_start:*mut (), 
            stack_size:u32, priority:u8, tick:u8) -> Self {
-        let mut thread = Self {
+        let thread = Self {
             parent:Object::new(),
             entry,
             parameter,
