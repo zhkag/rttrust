@@ -3,6 +3,7 @@ use crate::list::List;
 use crate::thread_self;
 use crate::scheduler;
 use crate::libcpu;
+use crate::interrupt_nest;
 
 const THREAD_PRIORITY_MAX: usize = 32;
 
@@ -52,31 +53,38 @@ impl Scheduler {
             else {
                 need_insert_from_thread = true;
             }
-            if to_thread != thread_self!().unwrap()
-            {
-                /* if the destination thread is not the same as current thread */
-                let from_thread = thread_self!().unwrap();
-                if (from_thread.stat() & Status::STAT_YIELD_MASK as u8) != 0{
-                    from_thread.set_stat(from_thread.stat() & !(Status::STAT_YIELD_MASK as u8));
-                }
-
-                scheduler!(set_current_thread(Some(to_thread)));
-                if need_insert_from_thread {
-                    // self.insert_thread(from_thread);
-                    scheduler!(insert_thread(from_thread));
-                }
-
-                scheduler!(remove_thread(to_thread));
-                to_thread.set_stat(Status::Running as u8 | (to_thread.stat() & !(Status::StatMask as u8)));
-
-                let from_sp = (from_thread.sp_mut()) as *mut *mut () as *mut ();
-                let to_sp = (to_thread.sp_mut()) as *mut *mut () as *mut ();
-                libcpu::rt_hw_context_switch_interrupt(from_sp,to_sp,from_thread,to_thread);
-
-            }else {
-                scheduler!(remove_thread(thread_self!().unwrap()));
-                current_thread.set_stat(Status::Running as u8 | (current_thread.stat() & !(Status::StatMask as u8)));
+        }
+        if to_thread != thread_self!().unwrap()
+        {
+            /* if the destination thread is not the same as current thread */
+            let from_thread = thread_self!().unwrap();
+            if (from_thread.stat() & Status::STAT_YIELD_MASK as u8) != 0{
+                from_thread.set_stat(from_thread.stat() & !(Status::STAT_YIELD_MASK as u8));
             }
+
+            scheduler!(set_current_thread(Some(to_thread)));
+            if need_insert_from_thread {
+                scheduler!(insert_thread(from_thread));
+            }
+
+            scheduler!(remove_thread(to_thread));
+            to_thread.set_stat(Status::Running as u8 | (to_thread.stat() & !(Status::StatMask as u8)));
+
+            let from_sp = (from_thread.sp_mut()) as *mut *mut () as *mut ();
+            let to_sp = (to_thread.sp_mut()) as *mut *mut () as *mut ();
+
+            if interrupt_nest!() == 0 {
+                libcpu::rt_hw_context_switch(from_sp, to_sp);
+                libcpu::interrupt_enable(level);
+                return;
+            }
+            else {
+                libcpu::rt_hw_context_switch_interrupt(from_sp,to_sp,from_thread,to_thread);
+            }
+
+        }else {
+            scheduler!(remove_thread(thread_self!().unwrap()));
+            current_thread.set_stat(Status::Running as u8 | (current_thread.stat() & !(Status::StatMask as u8)));
         }
         libcpu::interrupt_enable(level);
 

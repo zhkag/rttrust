@@ -46,6 +46,10 @@ impl Timer {
         libcpu::interrupt_enable(level);
     }
 
+    pub fn control(&mut self,tick:usize){
+        self.init_tick = tick;
+    }
+
     pub fn list_mut(&mut self) -> &mut List<Self> {
         &mut self.list
     }
@@ -62,8 +66,8 @@ impl Timer {
         for node in timer_list.iter_mut() {
             current = node;
             let timer = Self::list_to_timer(node);
-            timer.list_mut().remove();
-            if tick > timer.timeout_tick {
+            if tick >= timer.timeout_tick {
+                timer.list_mut().remove();
                 (timer.timeout_func)(timer.parameter);
             }
         }

@@ -2,6 +2,9 @@ use libcpu;
 use crate::tick;
 use core::arch::asm;
 use crate::thread::Thread;
+use crate::interrupt_leave;
+use crate::interrupt_enter;
+
 #[export_name = "rt_hw_context_switch_to"]
 pub extern "C" fn rt_hw_context_switch_to(_sp: *mut ()) {
     unsafe{asm!("bl   rt_hw_context_switch_to_base");}
@@ -32,7 +35,9 @@ pub extern "C" fn interrupt_enable(_level:isize){
 
 #[no_mangle]
 fn kernel_sys_tick() {
+    interrupt_enter!();
     tick!(increase());
+    interrupt_leave!();
 }
 
 

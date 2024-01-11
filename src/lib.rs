@@ -11,6 +11,7 @@ pub mod tick;
 pub mod timer;
 pub mod kservice;
 mod libcpu;
+mod irq;
 
 use core::panic::PanicInfo;
 

@@ -1,10 +1,12 @@
 use crate::object::{ObjectInformation,ObjectClassType};
+use crate::println;
 use crate::scheduler::Scheduler;
 use crate::hw::HardWare;
 use crate::thread::Thread;
 use crate::tick::Tick;
 use crate::list::List;
 use crate::timer::Timer;
+use crate::irq::Interrupt;
 
 static mut SYSTREM: Option<System> = None;
 
@@ -21,6 +23,7 @@ pub struct System{
     tick:Tick,
     timer_list:List<Timer>,
     pub(super) object_container:[ObjectInformation; 8],
+    interrupt:Interrupt,
 }
 
 impl System {
@@ -42,6 +45,7 @@ impl System {
             tick:Tick::new(),
             timer_list:List::new(),
             object_container:[ObjectInformation::new();8],
+            interrupt:Interrupt::init(),
         };
         systerm
     }
@@ -51,6 +55,8 @@ impl System {
         let thread_static = unsafe {&mut MAIN_THREAD};
         let main_thread = Thread::init(thread_static,"main", main_fun, core::ptr::null_mut(),
                                                     stack_start, stack_size, 20, 32);
+
+        println!("{}",main_thread.parent);
         main_thread.startup();
     }
     fn init(&mut self)  {
@@ -80,7 +86,10 @@ impl System {
     pub fn scheduler_mut(&mut self) ->&mut Scheduler {
         self.scheduler.as_mut().unwrap()
     }
-
+    pub fn interrupt_mut(&mut self) ->&mut Interrupt {
+        &mut self.interrupt
+    }
+    
     pub fn tick_mut(&mut self) ->&mut Tick {
         &mut self.tick
     }
@@ -121,4 +130,19 @@ macro_rules! tick {
     ($($tokens:tt)*) => {{
         crate::system::System::global_mut().tick_mut().$($tokens)*
     }};
+}
+
+#[macro_export]
+macro_rules! interrupt_enter {
+    () => {{crate::system::System::global_mut().interrupt_mut().enter()}};
+}
+
+#[macro_export]
+macro_rules! interrupt_leave {
+    () => {{crate::system::System::global_mut().interrupt_mut().leave()}};
+}
+
+#[macro_export]
+macro_rules! interrupt_nest {
+    () => {{crate::system::System::global_mut().interrupt_mut().nest()}};
 }

@@ -27,6 +27,7 @@ fn main() {
     sys_gpio_pin_set(gpiof_base, 1 << 11,false);
     sys_gpio_pin_set(gpiof_base, 1 << 12,true);
     let mut led_num = 0;
+    kernel::thread_sleep!(10);
     loop {
         led_num += 1;
         if led_num % 100000 == 0{

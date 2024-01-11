@@ -4,6 +4,7 @@ use crate::timer::Timer;
 use crate::{scheduler,schedule};
 use crate::list::List;
 use crate::thread_self;
+use crate::libcpu;
 
 // use core::ops::{BitAnd,BitOr,Not};
 
@@ -45,6 +46,19 @@ impl Status {
 //     }
 // }
 
+/*
+ * for rt_thread_suspend_with_flag()
+ */
+
+#[repr(C)]
+enum SuspendWithFlag
+{
+    INTERRUPTIBLE = 0,
+    KILLABLE,
+    UNINTERRUPTIBLE,
+}
+
+
 #[derive(PartialEq)]
 #[derive(Copy, Clone)]
 pub struct Thread
@@ -64,6 +78,8 @@ pub struct Thread
     remaining_tick:u8,
     thread_timer:Option<Timer>,
 }
+
+
 
 impl Thread {
     fn new(entry: fn(*mut ()), parameter:*mut (), stack_start:*mut (), 
@@ -91,9 +107,14 @@ impl Thread {
     }
 
     fn thread_timeout(parameter:*mut ()){
-        let thread = unsafe{&mut *(parameter as *mut Self)};
-        
+        let thread = unsafe{&mut *(parameter as *mut Thread)};
+        let level = libcpu::interrupt_disable();
+        thread.list.remove();
+        libcpu::interrupt_enable(level);
+        scheduler!(insert_thread(thread));
+        schedule!();
     }
+
     fn thread_exit()
     {
         if let Some(thread) = thread_self!() {
@@ -116,6 +137,37 @@ impl Thread {
         
         thread_mut.list_mut().init();
         thread_mut
+    }
+
+    fn suspend_with_flag(&mut self, suspend_flag:SuspendWithFlag) -> bool{
+        let level = libcpu::interrupt_disable();
+        let stat = self.stat & Status::StatMask as u8;
+        if (stat != Status::Ready as u8) && (stat != Status::Running as u8){
+            libcpu::interrupt_enable(level);
+            return false;
+        }
+        scheduler!(remove_thread(self));
+        let stat = match suspend_flag {
+            SuspendWithFlag::INTERRUPTIBLE => Status::SUSPEND_INTERRUPTIBLE as u8,
+            _ => unreachable!(),
+        };
+        self.stat = stat | (self.stat & !(Status::StatMask as u8));
+        libcpu::interrupt_enable(level);
+        true
+    }
+
+    pub fn sleep(&mut self, tick:usize){
+        let level = libcpu::interrupt_disable();
+        if true == self.suspend_with_flag(SuspendWithFlag::INTERRUPTIBLE){
+            let timer = self.thread_timer.as_mut().unwrap();
+            timer.control(tick);
+            timer.start();
+            libcpu::interrupt_enable(level);
+            schedule!();
+        }
+        else {
+            libcpu::interrupt_enable(level);
+        }
     }
 
     pub fn sp_mut(&mut self) ->&mut *mut (){
@@ -175,5 +227,12 @@ impl Thread {
 macro_rules! thread_self {
     () => {{
         crate::scheduler!(current_thread())
+    }};
+}
+
+#[macro_export]
+macro_rules! thread_sleep {
+    ($tick:expr) => {{
+        crate::scheduler!(current_thread()).unwrap().sleep($tick);
     }};
 }
