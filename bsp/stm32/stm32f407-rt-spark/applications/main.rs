@@ -30,9 +30,10 @@ fn main() {
     kernel::thread_sleep!(10);
     loop {
         led_num += 1;
-        if led_num % 100000 == 0{
-            gpiof_base.odr ^= 1 << 12;
-            led_num = 0
+        kernel::thread_sleep!(500);
+        gpiof_base.odr ^= 1 << 12;
+        if led_num % 2 == 0{
+            led_num = 0;
         }
     }
 }
