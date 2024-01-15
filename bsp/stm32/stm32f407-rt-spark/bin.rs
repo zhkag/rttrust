@@ -16,7 +16,7 @@ use kernel::timer;
 use kernel::kservice;
 use kernel::println;
 
-const TEST_THREAD_STACK_SIZE: usize = 1024;
+const TEST_THREAD_STACK_SIZE: usize = 10240;
 static mut TEST_THREAD_STACK: [u8; TEST_THREAD_STACK_SIZE] = [0; TEST_THREAD_STACK_SIZE];
 static mut TEST_THREAD: Option<thread::Thread> = None;
 
@@ -78,12 +78,10 @@ fn test(_parameter:*mut ()) {
     let gpiof_base_ptr: *mut GPIOTypeDef = GPIOF_BASE as *mut GPIOTypeDef;
     let gpiof_base = unsafe { &mut *gpiof_base_ptr};
     let mut led_num = 0;
+
     loop {
-        led_num += 1;
-        if led_num % 100000 == 0{
-            gpiof_base.odr ^= 1 << 11;
-            led_num = 0
-        }
+        kernel::thread_sleep!(100);
+        gpiof_base.odr ^= 1 << 11;
     }
 }
 

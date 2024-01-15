@@ -26,14 +26,8 @@ fn main() {
     sys_gpio_set(gpiof_base, 1 << 12,1, 0, 1, 1);
     sys_gpio_pin_set(gpiof_base, 1 << 11,false);
     sys_gpio_pin_set(gpiof_base, 1 << 12,true);
-    let mut led_num = 0;
-    kernel::thread_sleep!(10);
     loop {
-        led_num += 1;
         kernel::thread_sleep!(500);
         gpiof_base.odr ^= 1 << 12;
-        if led_num % 2 == 0{
-            led_num = 0;
-        }
     }
 }

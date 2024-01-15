@@ -14,7 +14,7 @@ fn main_fun(_parameter:*mut ()) {
     unsafe{core::arch::asm!("bl main");}
 }
 
-const MAIN_THREAD_STACK_SIZE: usize = 1024;
+const MAIN_THREAD_STACK_SIZE: usize = 10240;
 static mut MAIN_THREAD_STACK: [u8; MAIN_THREAD_STACK_SIZE] = [0; MAIN_THREAD_STACK_SIZE];
 static mut MAIN_THREAD: Option<Thread> = None;
 
@@ -32,10 +32,7 @@ impl System {
             if SYSTREM.is_none(){
                 SYSTREM = Some(Self::new());
             }
-            match SYSTREM {
-                Some(ref mut x) => x,
-                None => unreachable!(),
-            }
+            SYSTREM.as_mut().unwrap()
         }
     }
 

@@ -1,11 +1,11 @@
 use crate::thread::Thread;
 
-const IDLE_THREAD_STACK_SIZE: usize = 1024;
+const IDLE_THREAD_STACK_SIZE: usize = 10240;
 static mut IDLE_THREAD_STACK: [u8; IDLE_THREAD_STACK_SIZE] = [0; IDLE_THREAD_STACK_SIZE];
 static mut IDLE_THREAD:Option<Thread> = None;
 
 fn idle_fun(_parameter: *mut ()) {
-
+    loop {}
 }
 
 pub fn rt_thread_idle_init(){
