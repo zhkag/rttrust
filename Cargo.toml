@@ -7,3 +7,6 @@ authors = ["zhangkang <zhangkang@rt-thread.com>"]
 
 [dependencies]
 libcpu = { path = "libcpu" }
+
+[build-dependencies]
+chrono = "*"

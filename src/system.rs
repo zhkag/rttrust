@@ -7,6 +7,7 @@ use crate::tick::Tick;
 use crate::list::List;
 use crate::timer::Timer;
 use crate::irq::Interrupt;
+use crate::kservice;
 
 static mut SYSTREM: Option<System> = None;
 
@@ -58,6 +59,7 @@ impl System {
     }
     fn init(&mut self)  {
         HardWare::board_init();
+        kservice::show_version();
         self.object_container_init();
         self.timer_init();
         self.scheduler_init();
