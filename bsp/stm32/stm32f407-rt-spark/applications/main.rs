@@ -31,3 +31,9 @@ fn main() {
         gpiof_base.odr ^= 1 << 12;
     }
 }
+
+#[export_name = "USART1_IRQHandler"]
+unsafe extern "C" fn USART1_IRQHandler() {
+
+}
+

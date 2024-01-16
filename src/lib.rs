@@ -13,6 +13,7 @@ pub mod kservice;
 mod libcpu;
 mod irq;
 mod include;
+mod components;
 
 use core::panic::PanicInfo;
 
@@ -24,10 +25,4 @@ fn panic(info: &PanicInfo) -> ! {
         println!("Panic in unknown location");
     }
     loop {}
-}
-
-#[no_mangle]
-fn entry() {
-    system!(startup());
-    unreachable!();
 }

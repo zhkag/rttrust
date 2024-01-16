@@ -3,6 +3,10 @@ pub struct HardWare {
     
 }
 
+const SCS_BASE: u32 = 0xE000E000;
+const NVIC_BASE: u32 = SCS_BASE + 0x0100;
+const SCB_BASE: u32 = SCS_BASE + 0x0D00;
+
 const PERIPH_BASE: u32 = 0x40000000;
 const APB1PERIPH_BASE: u32 = PERIPH_BASE;
 const APB2PERIPH_BASE: u32 = PERIPH_BASE + 0x00010000;
@@ -16,8 +20,79 @@ const FLASH_R_BASE: u32 = AHB1PERIPH_BASE + 0x3C00;
 const AHB1ENR: u32 = RCC_BASE + 0x30;
 
 
-const SCS_BASE: u32 = 0xE000E000;
 const SYS_TICK_BASE: u32 = SCS_BASE + 0x0010;
+
+#[repr(C)]
+struct NvicType
+{
+    ISER:[u32;8],              //< Offset: 0x000 (R/W)  Interrupt Set Enable Register */
+    RESERVED0:[u32;24],
+    ICER:[u32;8],              //< Offset: 0x080 (R/W)  Interrupt Clear Enable Register */
+    RSERVED1:[u32;24],
+    ISPR:[u32;8],              //< Offset: 0x100 (R/W)  Interrupt Set Pending Register */
+    RESERVED2:[u32;24],
+    ICPR:[u32;8],              //< Offset: 0x180 (R/W)  Interrupt Clear Pending Register */
+    RESERVED3:[u32;24],
+    IABR:[u32;8],              //< Offset: 0x200 (R/W)  Interrupt Active bit Register */
+    RESERVED4:[u32;56],
+    IP:[u8;240],              //< Offset: 0x300 (R/W)  Interrupt Priority Register (8Bit wide) */
+    RESERVED5:[u32;644],
+    STIR:u32,                  //< Offset: 0xE00 ( /W)  Software Trigger Interrupt Register */
+}
+
+#[repr(C)]
+struct ScbType
+{
+    CPUID:u32,                  //< Offset: 0x000 (R/ )  CPUID Base Register */
+    ICSR:u32,                   //< Offset: 0x004 (R/W)  Interrupt Control and State Register */
+    VTOR:u32,                   //< Offset: 0x008 (R/W)  Vector Table Offset Register */
+    AIRCR:u32,                  //< Offset: 0x00C (R/W)  Application Interrupt and Reset Control Register */
+    SCR:u32,                    //< Offset: 0x010 (R/W)  System Control Register */
+    CCR:u32,                    //< Offset: 0x014 (R/W)  Configuration Control Register */
+    SHP:[u8;12],               //< Offset: 0x018 (R/W)  System Handlers Priority Registers (4-7, 8-11, 12-15) */
+    SHCSR:u32,                  //< Offset: 0x024 (R/W)  System Handler Control and State Register */
+    CFSR:u32,                   //< Offset: 0x028 (R/W)  Configurable Fault Status Register */
+    HFSR:u32,                   //< Offset: 0x02C (R/W)  HardFault Status Register */
+    DFSR:u32,                   //< Offset: 0x030 (R/W)  Debug Fault Status Register */
+    MMFAR:u32,                  //< Offset: 0x034 (R/W)  MemManage Fault Address Register */
+    BFAR:u32,                   //< Offset: 0x038 (R/W)  BusFault Address Register */
+    AFSR:u32,                   //< Offset: 0x03C (R/W)  Auxiliary Fault Status Register */
+    PFR:[u32;2],                //< Offset: 0x040 (R/ )  Processor Feature Register */
+    DFR:u32,                    //< Offset: 0x048 (R/ )  Debug Feature Register */
+    ADR:u32,                    //< Offset: 0x04C (R/ )  Auxiliary Feature Register */
+    MMFR:[u32;4],               //< Offset: 0x050 (R/ )  Memory Model Feature Register */
+    ISAR:[u32;5],               //< Offset: 0x060 (R/ )  Instruction Set Attributes Register */
+    RESERVED0:[u32;5],
+    CPACR:u32,                  //< Offset: 0x088 (R/W)  Coprocessor Access Control Register */
+}
+
+fn sys_nvic_priority_group_config(group:u8)
+{
+    let scb = unsafe {&mut *(SCB_BASE as *mut ScbType)};
+    let mut temp:u32;
+    let mut temp1:u32;
+    temp1 = (!group as u32) & 0x07;/* 取后三位 */
+    temp1 <<= 8;
+    temp = scb.AIRCR;      /* 读取先前的设置 */
+    temp &= 0x0000F8FF;     /* 清空先前分组 */
+    temp |= 0x05FA0000;     /* 写入钥匙 */
+    temp |= temp1;
+    scb.AIRCR = temp;      /* 设置分组 */
+}
+
+
+fn sys_nvic_init(pprio:u8, sprio:u8, ch:u8, group:u8)
+{
+    let nvic = unsafe {&mut *(NVIC_BASE as *mut NvicType)};
+    let mut temp:u32;
+    sys_nvic_priority_group_config(group);  /* 设置分组 */
+    temp = (pprio << (4 - group)) as u32;
+    temp |= sprio as u32 & (0x0f >> group);
+    temp &= 0xf;                            /* 取低四位 */
+    nvic.ISER[(ch / 32) as usize] |= (1 << (ch % 32)) as u32;  /* 使能中断位(要清除的话,设置ICER对应位为1即可) */
+    nvic.IP[ch as usize] |= (temp << 4) as u8;              /* 设置响应优先级和抢断优先级 */
+}
+
 
 #[repr(C)]
 struct SysTickType {
@@ -264,7 +339,7 @@ fn usart_init(){
     /* 使能接收中断 */
     usart1.cr1 |= 1 << 2;    /* 串口接收使能 */
     usart1.cr1 |= 1 << 5;    /* 接收缓冲区非空中断使能 */
-    // sys_nvic_init(3, 3, USART_UX_IRQn, 2); /* 组2，最低优先级 */
+    sys_nvic_init(3, 3, 37, 2); /* 组2，最低优先级 */
     
     usart1.cr1 |= 1 << 13;   /* 串口使能 */
 
