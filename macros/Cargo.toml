@@ -1,0 +1,17 @@
+[package]
+name = "macros"
+version = "0.1.0"
+edition = "2021"
+readme = "README.md"
+authors = ["zhangkang <zhangkang@rt-thread.com>"]
+
+[lib]
+proc-macro = true
+
+[dependencies]
+quote = "1.0"
+proc-macro2 = "1.0"
+
+[dependencies.syn]
+features = ["extra-traits", "full"]
+version = "2.0"
