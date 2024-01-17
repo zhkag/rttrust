@@ -19,4 +19,6 @@ fn main() {
     let mut file = File::create("include.rs").expect("Unable to create file");
     writeln!(file, "pub const VERSION: &str = \"{}\";", version).expect("Failed to write version file");
     writeln!(file, "pub const BUILD_DATE: &str = \"{}\";", now_local.format("%Y-%m-%d %H:%M:%S").to_string()).unwrap();
+
+    println!("cargo:rerun-if-env-changed=LINKER_SCRIPT");
 }

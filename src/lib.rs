@@ -17,6 +17,8 @@ mod components;
 
 use core::panic::PanicInfo;
 
+extern crate macros;
+
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     if let Some(location) = info.location() {
