@@ -13,7 +13,7 @@ MEMORY
     MCUlcdgrambysram (rw) : ORIGIN = 0x68000000, LENGTH = 1024k
 }
 ENTRY(Reset_Handler)
-_system_stack_size = 0x400;
+_system_stack_size = 0x800;
 
 SECTIONS
 {
