@@ -26,14 +26,14 @@ macro_rules! println {
     () => {
         {
             use core::fmt::Write;
-            let mut usart_writer = crate::kservice::UsartWriter {};
+            let mut usart_writer = $crate::kservice::UsartWriter {};
             let _ = write!(usart_writer, "\r\n");
         }
     };
     ($($arg:tt)*) => {
         {
             use core::fmt::Write;
-            let mut usart_writer = crate::kservice::UsartWriter {};
+            let mut usart_writer = $crate::kservice::UsartWriter {};
             let _ = write!(usart_writer, $($arg)*);
             let _ = write!(usart_writer, "\r\n");
         }

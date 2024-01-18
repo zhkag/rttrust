@@ -109,42 +109,45 @@ impl System {
 
 #[macro_export]
 macro_rules! system {
+    () => {{
+        $crate::system::System::global_mut()
+    }};
     ($($tokens:tt)*) => {{
-        crate::system::System::global_mut().$($tokens)*
+        $crate::system::System::global_mut().$($tokens)*
     }};
 }
 
 #[macro_export]
 macro_rules! scheduler {
     ($($tokens:tt)*) => {{
-        crate::system::System::global_mut().scheduler_mut().$($tokens)*
+        $crate::system::System::global_mut().scheduler_mut().$($tokens)*
     }};
 }
 
 #[macro_export]
 macro_rules! schedule {
-    ()=>{crate::system::System::global_mut().scheduler_mut().schedule()};
+    ()=>{$crate::system::System::global_mut().scheduler_mut().schedule()};
 }
 
 
 #[macro_export]
 macro_rules! tick {
     ($($tokens:tt)*) => {{
-        crate::system::System::global_mut().tick_mut().$($tokens)*
+        $crate::system::System::global_mut().tick_mut().$($tokens)*
     }};
 }
 
 #[macro_export]
 macro_rules! interrupt_enter {
-    () => {{crate::system::System::global_mut().interrupt_mut().enter()}};
+    () => {{$crate::system::System::global_mut().interrupt_mut().enter()}};
 }
 
 #[macro_export]
 macro_rules! interrupt_leave {
-    () => {{crate::system::System::global_mut().interrupt_mut().leave()}};
+    () => {{$crate::system::System::global_mut().interrupt_mut().leave()}};
 }
 
 #[macro_export]
 macro_rules! interrupt_nest {
-    () => {{crate::system::System::global_mut().interrupt_mut().nest()}};
+    () => {{$crate::system::System::global_mut().interrupt_mut().nest()}};
 }

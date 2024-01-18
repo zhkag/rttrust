@@ -227,13 +227,13 @@ impl Thread {
 #[macro_export]
 macro_rules! thread_self {
     () => {{
-        crate::scheduler!(current_thread())
+        $crate::scheduler!(current_thread())
     }};
 }
 
 #[macro_export]
 macro_rules! thread_sleep {
     ($tick:expr) => {{
-        crate::scheduler!(current_thread()).unwrap().sleep($tick);
+        $crate::scheduler!(current_thread()).unwrap().sleep($tick);
     }};
 }
