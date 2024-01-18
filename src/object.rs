@@ -3,6 +3,7 @@ use crate::system::System;
 use crate::system;
 use crate::libcpu;
 
+#[allow(dead_code)]
 #[derive(PartialEq)]
 #[derive(Copy, Clone)]
 pub enum ObjectClassType

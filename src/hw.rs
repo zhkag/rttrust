@@ -15,8 +15,10 @@ const PWR_BASE: u32 = APB1PERIPH_BASE + 0x7000;
 const USART1_BASE: u32 = APB2PERIPH_BASE + 0x1000;
 const RCC_BASE: u32 = AHB1PERIPH_BASE + 0x3800;
 const GPIOA_BASE: u32 = AHB1PERIPH_BASE + 0x0000;
+#[allow(dead_code)]
 const GPIOF_BASE: u32 = AHB1PERIPH_BASE + 0x1400;
 const FLASH_R_BASE: u32 = AHB1PERIPH_BASE + 0x3C00;
+#[allow(dead_code)]
 const AHB1ENR: u32 = RCC_BASE + 0x30;
 
 
@@ -25,45 +27,45 @@ const SYS_TICK_BASE: u32 = SCS_BASE + 0x0010;
 #[repr(C)]
 struct NvicType
 {
-    ISER:[u32;8],              //< Offset: 0x000 (R/W)  Interrupt Set Enable Register */
-    RESERVED0:[u32;24],
-    ICER:[u32;8],              //< Offset: 0x080 (R/W)  Interrupt Clear Enable Register */
-    RSERVED1:[u32;24],
-    ISPR:[u32;8],              //< Offset: 0x100 (R/W)  Interrupt Set Pending Register */
-    RESERVED2:[u32;24],
-    ICPR:[u32;8],              //< Offset: 0x180 (R/W)  Interrupt Clear Pending Register */
-    RESERVED3:[u32;24],
-    IABR:[u32;8],              //< Offset: 0x200 (R/W)  Interrupt Active bit Register */
-    RESERVED4:[u32;56],
-    IP:[u8;240],              //< Offset: 0x300 (R/W)  Interrupt Priority Register (8Bit wide) */
-    RESERVED5:[u32;644],
-    STIR:u32,                  //< Offset: 0xE00 ( /W)  Software Trigger Interrupt Register */
+    iser:[u32;8],              //< Offset: 0x000 (R/W)  Interrupt Set Enable Register */
+    reserved0:[u32;24],
+    icer:[u32;8],              //< Offset: 0x080 (R/W)  Interrupt Clear Enable Register */
+    rserved1:[u32;24],
+    ispr:[u32;8],              //< Offset: 0x100 (R/W)  Interrupt Set Pending Register */
+    reserved2:[u32;24],
+    icpr:[u32;8],              //< Offset: 0x180 (R/W)  Interrupt Clear Pending Register */
+    reserved3:[u32;24],
+    iabr:[u32;8],              //< Offset: 0x200 (R/W)  Interrupt Active bit Register */
+    reserved4:[u32;56],
+    ip:[u8;240],              //< Offset: 0x300 (R/W)  Interrupt Priority Register (8Bit wide) */
+    reserved5:[u32;644],
+    stir:u32,                  //< Offset: 0xE00 ( /W)  Software Trigger Interrupt Register */
 }
 
 #[repr(C)]
 struct ScbType
 {
-    CPUID:u32,                  //< Offset: 0x000 (R/ )  CPUID Base Register */
-    ICSR:u32,                   //< Offset: 0x004 (R/W)  Interrupt Control and State Register */
-    VTOR:u32,                   //< Offset: 0x008 (R/W)  Vector Table Offset Register */
-    AIRCR:u32,                  //< Offset: 0x00C (R/W)  Application Interrupt and Reset Control Register */
-    SCR:u32,                    //< Offset: 0x010 (R/W)  System Control Register */
-    CCR:u32,                    //< Offset: 0x014 (R/W)  Configuration Control Register */
-    SHP:[u8;12],               //< Offset: 0x018 (R/W)  System Handlers Priority Registers (4-7, 8-11, 12-15) */
-    SHCSR:u32,                  //< Offset: 0x024 (R/W)  System Handler Control and State Register */
-    CFSR:u32,                   //< Offset: 0x028 (R/W)  Configurable Fault Status Register */
-    HFSR:u32,                   //< Offset: 0x02C (R/W)  HardFault Status Register */
-    DFSR:u32,                   //< Offset: 0x030 (R/W)  Debug Fault Status Register */
-    MMFAR:u32,                  //< Offset: 0x034 (R/W)  MemManage Fault Address Register */
-    BFAR:u32,                   //< Offset: 0x038 (R/W)  BusFault Address Register */
-    AFSR:u32,                   //< Offset: 0x03C (R/W)  Auxiliary Fault Status Register */
-    PFR:[u32;2],                //< Offset: 0x040 (R/ )  Processor Feature Register */
-    DFR:u32,                    //< Offset: 0x048 (R/ )  Debug Feature Register */
-    ADR:u32,                    //< Offset: 0x04C (R/ )  Auxiliary Feature Register */
-    MMFR:[u32;4],               //< Offset: 0x050 (R/ )  Memory Model Feature Register */
-    ISAR:[u32;5],               //< Offset: 0x060 (R/ )  Instruction Set Attributes Register */
-    RESERVED0:[u32;5],
-    CPACR:u32,                  //< Offset: 0x088 (R/W)  Coprocessor Access Control Register */
+    cpuid:u32,                  //< Offset: 0x000 (R/ )  CPUID Base Register */
+    icsr:u32,                   //< Offset: 0x004 (R/W)  Interrupt Control and State Register */
+    vtor:u32,                   //< Offset: 0x008 (R/W)  Vector Table Offset Register */
+    aircr:u32,                  //< Offset: 0x00C (R/W)  Application Interrupt and Reset Control Register */
+    scr:u32,                    //< Offset: 0x010 (R/W)  System Control Register */
+    ccr:u32,                    //< Offset: 0x014 (R/W)  Configuration Control Register */
+    shp:[u8;12],               //< Offset: 0x018 (R/W)  System Handlers Priority Registers (4-7, 8-11, 12-15) */
+    shcsr:u32,                  //< Offset: 0x024 (R/W)  System Handler Control and State Register */
+    cfsr:u32,                   //< Offset: 0x028 (R/W)  Configurable Fault Status Register */
+    hfsr:u32,                   //< Offset: 0x02C (R/W)  HardFault Status Register */
+    dfsr:u32,                   //< Offset: 0x030 (R/W)  Debug Fault Status Register */
+    mmfar:u32,                  //< Offset: 0x034 (R/W)  MemManage Fault Address Register */
+    bfar:u32,                   //< Offset: 0x038 (R/W)  BusFault Address Register */
+    afsr:u32,                   //< Offset: 0x03C (R/W)  Auxiliary Fault Status Register */
+    pfr:[u32;2],                //< Offset: 0x040 (R/ )  Processor Feature Register */
+    dfr:u32,                    //< Offset: 0x048 (R/ )  Debug Feature Register */
+    adr:u32,                    //< Offset: 0x04C (R/ )  Auxiliary Feature Register */
+    mmfr:[u32;4],               //< Offset: 0x050 (R/ )  Memory Model Feature Register */
+    isar:[u32;5],               //< Offset: 0x060 (R/ )  Instruction Set Attributes Register */
+    reserved0:[u32;5],
+    cpacr:u32,                  //< Offset: 0x088 (R/W)  Coprocessor Access Control Register */
 }
 
 fn sys_nvic_priority_group_config(group:u8)
@@ -73,11 +75,11 @@ fn sys_nvic_priority_group_config(group:u8)
     let mut temp1:u32;
     temp1 = (!group as u32) & 0x07;/* 取后三位 */
     temp1 <<= 8;
-    temp = scb.AIRCR;      /* 读取先前的设置 */
+    temp = scb.aircr;      /* 读取先前的设置 */
     temp &= 0x0000F8FF;     /* 清空先前分组 */
     temp |= 0x05FA0000;     /* 写入钥匙 */
     temp |= temp1;
-    scb.AIRCR = temp;      /* 设置分组 */
+    scb.aircr = temp;      /* 设置分组 */
 }
 
 
@@ -89,8 +91,8 @@ fn sys_nvic_init(pprio:u8, sprio:u8, ch:u8, group:u8)
     temp = (pprio << (4 - group)) as u32;
     temp |= sprio as u32 & (0x0f >> group);
     temp &= 0xf;                            /* 取低四位 */
-    nvic.ISER[(ch / 32) as usize] |= (1 << (ch % 32)) as u32;  /* 使能中断位(要清除的话,设置ICER对应位为1即可) */
-    nvic.IP[ch as usize] |= (temp << 4) as u8;              /* 设置响应优先级和抢断优先级 */
+    nvic.iser[(ch / 32) as usize] |= (1 << (ch % 32)) as u32;  /* 使能中断位(要清除的话,设置ICER对应位为1即可) */
+    nvic.ip[ch as usize] |= (temp << 4) as u8;              /* 设置响应优先级和抢断优先级 */
 }
 
 
@@ -274,7 +276,7 @@ fn sys_gpio_set(p_gpiox: &mut GPIOTypeDef, pinx:u16, mode:u32, otype:u32, ospeed
     }
 }
 
-fn sys_gpio_pin_set(p_gpiox: &mut GPIOTypeDef, pinx:u32, status:bool)
+fn _sys_gpio_pin_set(p_gpiox: &mut GPIOTypeDef, pinx:u32, status:bool)
 {
     if status {
         p_gpiox.bsrr |= pinx;

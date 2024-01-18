@@ -70,9 +70,9 @@ impl System {
     }
 
     fn object_container_init(&mut self) {
-        let mut num = 0;
-        self.object_container[num].init(ObjectClassType::Thread,core::mem::size_of::<Thread>().try_into().unwrap());
-        num += 1;
+        let mut _num = 0;
+        self.object_container[_num].init(ObjectClassType::Thread,core::mem::size_of::<Thread>().try_into().unwrap());
+        _num += 1;
     }
 
     fn timer_init(&mut self) {

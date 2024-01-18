@@ -62,9 +62,9 @@ impl Timer {
     pub fn check(tick:usize){
         let level = libcpu::interrupt_disable();
         let timer_list = system!(timer_list_mut());
-        let mut current = timer_list as *mut List<Self>;
+        let mut _current = timer_list as *mut List<Self>;
         for node in timer_list.iter_mut() {
-            current = node;
+            _current = node;
             let timer = Self::list_to_timer(node);
             if tick >= timer.timeout_tick {
                 timer.list_mut().remove();

@@ -1,3 +1,4 @@
+#[allow(unused_imports)]
 use libcpu;
 use crate::tick;
 use core::arch::asm;

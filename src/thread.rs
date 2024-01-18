@@ -51,6 +51,7 @@ impl Status {
  */
 
 #[repr(C)]
+#[allow(dead_code)]
 enum SuspendWithFlag
 {
     INTERRUPTIBLE = 0,

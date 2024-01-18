@@ -7,14 +7,9 @@ mod drivers;
 
 use kernel::system;
 use kernel::scheduler;
-use kernel::idle;
-use kernel::hw;
 use kernel::thread;
-use kernel::list;
 use kernel::tick;
 use kernel::timer;
-use kernel::kservice;
-use kernel::println;
 
 const TEST_THREAD_STACK_SIZE: usize = 10240;
 static mut TEST_THREAD_STACK: [u8; TEST_THREAD_STACK_SIZE] = [0; TEST_THREAD_STACK_SIZE];
@@ -72,12 +67,9 @@ fn sys_gpio_pin_set(p_gpiox: &mut GPIOTypeDef, pinx:u32, status:bool)
 }
 
 fn test(_parameter:*mut ()) {
-    #[cfg(feature = "bsptest")]
-    println!("test thread");
     let mut _tick = tick!(get());
     let gpiof_base_ptr: *mut GPIOTypeDef = GPIOF_BASE as *mut GPIOTypeDef;
     let gpiof_base = unsafe { &mut *gpiof_base_ptr};
-    let mut led_num = 0;
 
     loop {
         kernel::thread_sleep!(100);
@@ -88,6 +80,6 @@ fn test(_parameter:*mut ()) {
 use crate::timer::Timer;
 
 static mut TEST_TIMER: Option<Timer> = None;
-fn timer_timeout(parameter:*mut ()) {
-    let mut led_num = 0;
+fn timer_timeout(_parameter:*mut ()) {
+
 }
