@@ -13,6 +13,7 @@ use crate::components;
 static mut SYSTREM: Option<System> = None;
 
 fn main_fun(_parameter:*mut ()) {
+    components::init();
     unsafe{core::arch::asm!("bl main");}
 }
 
