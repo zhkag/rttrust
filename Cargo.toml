@@ -11,3 +11,8 @@ macros = { path = "macros", version = "=0.1.0" }
 
 [build-dependencies]
 chrono = "*"
+toml = "*"
+
+[package.metadata]
+NAME_MAX = 8
+THREAD_PRIORITY_MAX = 32

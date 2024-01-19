@@ -5,8 +5,6 @@ mod board;
 mod applications;
 mod drivers;
 
-use kernel::system;
-use kernel::scheduler;
 use kernel::thread;
 use kernel::tick;
 use kernel::timer;

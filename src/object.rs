@@ -2,6 +2,7 @@ use crate::list::List;
 use crate::system::System;
 use crate::system;
 use crate::libcpu;
+use crate::include::NAME_MAX;
 
 #[allow(dead_code)]
 #[derive(PartialEq)]
@@ -25,6 +26,26 @@ pub enum ObjectClassType
     Custom        = 0x0e,
     Unknown       = 0x0f,
     Static        = 0x80,
+}
+
+#[repr(C)]
+pub enum ObjectInfoType
+{
+    Thread = 0,                         //< The object is a thread. */
+    Semaphore,                          //< The object is a semaphore. */
+    Mutex,                              //< The object is a mutex. */
+    Event,                              //< The object is a event. */
+    MailBox,                            //< The object is a mail box. */
+    MessageQueue,                       //< The object is a message queue. */
+    MemHeap,                            //< The object is a memory heap */
+    MemPool,                            //< The object is a memory pool. */
+    Device,                             //< The object is a device */
+    Timer,                              //< The object is a timer. */
+    Module,                             //< The object is a module. */
+    Memory,                            //< The object is a memory. */
+    Channel,                            //< The object is a IPC channel */
+    Custom,                             //< The object is a custom object */
+    Unknown,                            //< The object is unknown. */
 }
 
 impl core::fmt::Display for ObjectClassType {
@@ -52,7 +73,7 @@ pub struct ObjectInformation
 #[derive(Copy, Clone)]
 pub struct Object
 {
-    name:[u8;8],
+    name:[u8;NAME_MAX],
     r#type:ObjectClassType,                              
     flag:u8,                              
     list:List<Self>,
@@ -72,7 +93,7 @@ impl core::fmt::Display for Object {
 impl Object {
     pub fn new() -> Self{
         let object = Self{
-            name: [b'\0'; 8],
+            name: [b'\0'; NAME_MAX],
             r#type: ObjectClassType::Null,
             flag: 0,
             list: List::new(), 
@@ -82,7 +103,7 @@ impl Object {
     pub fn init(&mut self, r#type:ObjectClassType, name:&str) {
         self.r#type = r#type;
         self.list.init();
-        for index in 0..8 {
+        for index in 0..NAME_MAX {
             if let Some(char) = name.as_bytes().get(index){
                 self.name[index] = *char;
             }else {
@@ -112,7 +133,7 @@ impl ObjectInformation {
 impl System {
     fn install_object(&mut self, r#type:ObjectClassType, list:&mut List<Object>){
         let level = libcpu::interrupt_disable();
-        for index in 0..8 {
+        for index in 0..ObjectInfoType::Unknown as usize {
             if self.object_container[index].object_class_type == r#type {
                 self.object_container[index].object_list.insert_after(list);
                 libcpu::interrupt_enable(level);

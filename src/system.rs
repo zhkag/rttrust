@@ -1,4 +1,4 @@
-use crate::object::{ObjectInformation,ObjectClassType};
+use crate::object::{ObjectInformation,ObjectClassType,ObjectInfoType};
 use crate::println;
 use crate::scheduler::Scheduler;
 use crate::hw::HardWare;
@@ -25,7 +25,7 @@ pub struct System{
     scheduler:Option<Scheduler>,
     tick:Tick,
     timer_list:List<Timer>,
-    pub(super) object_container:[ObjectInformation; 8],
+    pub(super) object_container:[ObjectInformation; ObjectInfoType::Unknown as usize],
     interrupt:Interrupt,
 }
 
@@ -44,7 +44,7 @@ impl System {
             scheduler:None,
             tick:Tick::new(),
             timer_list:List::new(),
-            object_container:[ObjectInformation::new();8],
+            object_container:[ObjectInformation::new(); ObjectInfoType::Unknown as usize],
             interrupt:Interrupt::init(),
         };
         systerm
@@ -71,9 +71,7 @@ impl System {
     }
 
     fn object_container_init(&mut self) {
-        let mut _num = 0;
-        self.object_container[_num].init(ObjectClassType::Thread,core::mem::size_of::<Thread>().try_into().unwrap());
-        _num += 1;
+        self.object_container[ObjectInfoType::Thread as usize].init(ObjectClassType::Thread,core::mem::size_of::<Thread>().try_into().unwrap());
     }
 
     fn timer_init(&mut self) {

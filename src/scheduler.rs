@@ -4,8 +4,7 @@ use crate::thread_self;
 use crate::scheduler;
 use crate::libcpu;
 use crate::interrupt_nest;
-
-const THREAD_PRIORITY_MAX: usize = 32;
+use crate::include::{*};
 
 #[derive(Copy, Clone)]
 pub struct Scheduler{
