@@ -219,7 +219,7 @@ impl Thread {
 }
 
 impl Scheduler {
-    pub fn list_to_thread(&self, list: *mut List<Thread>) -> &'static mut Thread {
+    pub fn list_to_thread(&self, list: *mut List<Thread>) -> &mut Thread {
         #[allow(deref_nullptr)]
         unsafe { &mut *((list as usize - (&(&*(0 as *const Thread)).list) as *const List<Thread> as usize) as *mut Thread) }
     }

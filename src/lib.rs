@@ -1,6 +1,6 @@
 #![no_main]
 #![no_std]
-mod object;
+pub mod object;
 pub mod system;
 pub mod scheduler;
 pub mod idle;
@@ -17,7 +17,7 @@ mod components;
 
 use core::panic::PanicInfo;
 
-extern crate macros;
+pub extern crate macros;
 
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {

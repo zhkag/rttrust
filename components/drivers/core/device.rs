@@ -1,4 +1,9 @@
+use kernel::system;
+use kernel::object::Object;
+use kernel::object::ObjectClassType;
+
 #[repr(C)]
+#[allow(dead_code)]
 pub enum DeviceClassType
 {
     Char = 0,                           //< character device */
@@ -35,7 +40,9 @@ pub enum DeviceClassType
     Unknown                             //< unknown device */
 }
 
-struct Device
+#[allow(dead_code)]
+#[repr(C)]
+pub struct Device
 {
     pub(super) parent:Object,
     r#type:ObjectClassType,                     //< device type */
@@ -46,13 +53,36 @@ struct Device
     user_data: *mut (),                //< device private data */
 }
 
-trait DeviceOps {
-    fn rx_indicate(&mut self, size:usize) -> isize;
-    fn tx_complete(&mut self, buffer: *mut ()) -> isize;
-    fn init(&mut self) -> isize;
-    fn open(&mut self, oflag:u16) -> isize;
-    fn close(&mut self) -> isize;
-    fn read(&mut self, pos:isize, buffer: *mut (), size:usize) -> isize;
-    fn write(&mut self, pos:isize, buffer: *const (), size:usize) -> isize;
-    fn control(&mut self,size:usize) -> isize;
+pub trait DeviceOps {
+    fn rx_indicate(&mut self, _size:usize) -> isize { 0 }
+    fn tx_complete(&mut self, _buffer: *mut ()) -> isize { 0 }
+    fn init(&mut self) -> isize { 0 }
+    fn open(&mut self, _oflag:u16) -> isize { 0 }
+    fn close(&mut self) -> isize { 0 }
+    fn read(&mut self, _pos:isize, _buffer: *mut (), _size:usize) -> isize { 0 }
+    fn write(&mut self, _pos:isize, _buffer: *const (), _size:usize) -> isize { 0 }
+    fn control(&mut self, _size:usize) -> isize { 0 }
+}
+
+#[allow(dead_code)]
+impl Device {
+    pub fn find(&self, name: &str) -> Option<&mut Device>{
+        let system = system!();
+        if let Some(object) = system.object_find(name,ObjectClassType::Device){
+            return Some(self.object_to_device(object));
+        }
+        None
+    }
+
+    pub fn register(&mut self, name: &str){
+        if self.find(name).is_some() {
+            return ;
+        }
+        self.parent.init(ObjectClassType::Device, name);
+    }
+
+    fn object_to_device(&self, parent: *mut Object) -> &mut Device {
+        #[allow(deref_nullptr)]
+        unsafe { &mut *((parent as usize - (&(&*(0 as *const Device)).parent) as *const Object as usize) as *mut Device) }
+    }
 }

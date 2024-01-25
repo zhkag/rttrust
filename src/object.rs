@@ -66,7 +66,7 @@ impl core::fmt::Display for ObjectClassType {
 pub struct ObjectInformation
 {
     object_class_type:ObjectClassType,
-    object_list:List<Object>,
+    pub object_list:List<Object>,
     object_size:u16,
 }
 
@@ -113,6 +113,22 @@ impl Object {
         }
         system!(install_object(r#type,&mut self.list));
     }
+
+    fn compare_name(&self, name:&str) -> bool{
+        let mut name_temp:[u8;NAME_MAX] = [b'\0'; NAME_MAX];
+        for index in 0..NAME_MAX {
+            if let Some(char) = name.as_bytes().get(index){
+                name_temp[index] = *char;
+            }else {
+                break;
+            }
+        }
+        if name_temp == self.name {
+            true
+        }else {
+            false
+        }
+    }
 }
 
 impl ObjectInformation {
@@ -142,6 +158,35 @@ impl System {
             }
         }
         libcpu::interrupt_enable(level);
+    }
+
+    pub fn get_object_information(&mut self, r#type:ObjectClassType) -> Option<&mut ObjectInformation>{
+        let level = libcpu::interrupt_disable();
+        for index in 0..ObjectInfoType::Unknown as usize {
+            if self.object_container[index].object_class_type == r#type {
+                libcpu::interrupt_enable(level);
+                return Some(&mut self.object_container[index]);
+            }
+        }
+        libcpu::interrupt_enable(level);
+        None
+    }
+
+    pub fn object_find(&mut self, name:&str, r#type:ObjectClassType) -> Option<&mut Object>{
+        if let Some(information) = self.get_object_information(r#type){
+            for node in information.object_list.iter_mut() {
+                let object = self.list_to_object(node);
+                if  object.compare_name(name) {
+                    return Some(object);
+                }
+            }
+        }
+        None
+    }
+
+    pub fn list_to_object(&self, list: *mut List<Object>) -> &mut Object {
+        #[allow(deref_nullptr)]
+        unsafe { &mut *((list as usize - (&(&*(0 as *const Object)).list) as *const List<Object> as usize) as *mut Object) }
     }
 }
 

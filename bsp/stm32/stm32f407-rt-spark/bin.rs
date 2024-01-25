@@ -1,5 +1,7 @@
 #![no_main]
 #![no_std]
+#[allow(unused_imports)]
+use components;
 
 mod board;
 mod applications;
