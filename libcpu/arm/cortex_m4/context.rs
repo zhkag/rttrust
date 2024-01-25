@@ -83,6 +83,7 @@ unsafe extern "C" fn sys_tick_handler() {
 
 #[export_name = "PendSV_Handler"]
 unsafe extern "C" fn pend_sv_handler() {
+    asm!("pop   {{r7, lr}}");  //rust 函数会添加汇编压栈，但是此函数并不需要，如果没有这行的话会导致系统栈一直压栈
     asm!("MRS   r2, PRIMASK");
     asm!("CPSID I");
     asm!("LDR   r0, ={}",sym cpuport::RT_THREAD_SWITCH_INTERRUPT_FLAG);
