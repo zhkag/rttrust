@@ -1,7 +1,7 @@
 use crate::hw::HardWare;
 use crate::object::Object;
 use crate::timer::Timer;
-use crate::{scheduler,schedule};
+use crate::{scheduler, schedule, scheduler::Scheduler};
 use crate::list::List;
 use crate::thread_self;
 use crate::libcpu;
@@ -216,12 +216,13 @@ impl Thread {
     pub fn list_mut(&mut self) -> &mut List<Self> {
         &mut self.list
     }
+}
 
-    pub fn list_to_thread(list: *mut List<Self>) -> &'static mut Self {
+impl Scheduler {
+    pub fn list_to_thread(&self, list: *mut List<Thread>) -> &'static mut Thread {
         #[allow(deref_nullptr)]
-        unsafe { &mut *((list as usize - (&(&*(0 as *const Self)).list) as *const List<Self> as usize) as *mut Self) }
+        unsafe { &mut *((list as usize - (&(&*(0 as *const Thread)).list) as *const List<Thread> as usize) as *mut Thread) }
     }
-
 }
 
 #[macro_export]

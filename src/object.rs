@@ -28,6 +28,7 @@ pub enum ObjectClassType
     Static        = 0x80,
 }
 
+#[allow(dead_code)]
 #[repr(C)]
 pub enum ObjectInfoType
 {

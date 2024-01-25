@@ -134,14 +134,8 @@ impl Scheduler {
         let highest_ready_priority:u8 = self.ready_priority_group.trailing_zeros() as u8;
         *highest_prio = highest_ready_priority;
         let node = self.priority_table[highest_ready_priority as usize].iter_mut().next().expect("REASON");
-        Thread::list_to_thread(node)
+        self.list_to_thread(node)
     }
-    // fn get_highest_priority_thread(&self,highest_prio: &mut usize) -> Thread {
-    //     let highest_ready_priority:usize = self.ready_priority_group.trailing_zeros() as usize;
-    //     *highest_prio = highest_ready_priority;
-    //     let node = self.priority_table[highest_ready_priority].iter_mut().next().expect("REASON");
-    //     offset_of!(node,Thread,list)
-    // }
 
     pub fn start(&mut self) {
         let mut highest_ready_priority = 0;

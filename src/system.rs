@@ -117,6 +117,9 @@ macro_rules! system {
 
 #[macro_export]
 macro_rules! scheduler {
+    () => {{
+        $crate::system::System::global_mut().scheduler_mut();
+    }};
     ($($tokens:tt)*) => {{
         $crate::system::System::global_mut().scheduler_mut().$($tokens)*
     }};

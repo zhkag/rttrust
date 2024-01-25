@@ -1,4 +1,5 @@
 use crate::system;
+use crate::system::System;
 use crate::tick;
 use crate::list::List;
 use crate::libcpu;
@@ -32,11 +33,12 @@ impl Timer {
     pub fn start(&mut self){
         let level = libcpu::interrupt_disable();
         self.timeout_tick = tick!(get()) + self.init_tick;
-        let timer_list = system!(timer_list_mut());
+        let system = system!();
+        let timer_list = system.timer_list_mut();
         let mut current = timer_list as *mut List<Self>;
         for node in timer_list.iter_mut() {
             current = node;
-            let timer = Self::list_to_timer(node);
+            let timer = system.list_to_timer(node);
             if self.timeout_tick > timer.timeout_tick {
                 continue;
             }
@@ -53,19 +55,21 @@ impl Timer {
     pub fn list_mut(&mut self) -> &mut List<Self> {
         &mut self.list
     }
+}
 
-    pub fn list_to_timer(list: *mut List<Self>) -> &'static mut Self {
+impl System {
+    pub fn list_to_timer(&self, list: *mut List<Timer>) -> &'static mut Timer {
         #[allow(deref_nullptr)]
-        unsafe { &mut *((list as usize - (&(&*(0 as *const Self)).list) as *const List<Self> as usize) as *mut Self) }
+        unsafe { &mut *((list as usize - (&(&*(0 as *const Timer)).list) as *const List<Timer> as usize) as *mut Timer) }
     }
 
-    pub fn check(tick:usize){
+    pub fn check(&self, tick:usize){
         let level = libcpu::interrupt_disable();
         let timer_list = system!(timer_list_mut());
-        let mut _current = timer_list as *mut List<Self>;
+        let mut _current = timer_list as *mut List<Timer>;
         for node in timer_list.iter_mut() {
             _current = node;
-            let timer = Self::list_to_timer(node);
+            let timer = self.list_to_timer(node);
             if tick >= timer.timeout_tick {
                 timer.list_mut().remove();
                 (timer.timeout_func)(timer.parameter);
@@ -74,4 +78,3 @@ impl Timer {
         libcpu::interrupt_enable(level);
     }
 }
-
