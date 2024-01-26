@@ -3,6 +3,7 @@ use crate::system;
 
 #[no_mangle]
 fn entry() {
+    start_init();
     system!(startup());
     unreachable!();
 }
@@ -27,6 +28,10 @@ fn section_fn_run(start_ptr: *const fn(), end_ptr: *const fn()){
         unsafe {(*fn_ptr)();}
         fn_ptr = unsafe {fn_ptr.offset(1)};
     }
+}
+
+fn start_init(){
+    section_fn_run(&__rt_init_rti_start,&__rt_init_rti_board_start);
 }
 
 pub fn board_init(){

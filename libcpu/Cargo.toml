@@ -7,3 +7,7 @@ authors = ["zhangkang <zhangkang@rt-thread.com>"]
 
 [lib]
 path = "lib.rs"
+
+
+[dependencies]
+kernel = { path = "../" }

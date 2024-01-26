@@ -8,77 +8,9 @@ global_asm!(".equ  NVIC_SYSPRI2,       0xE000ED20");
 global_asm!(".equ  NVIC_PENDSV_PRI,    0xFFFF0000");
 global_asm!(".equ  NVIC_PENDSVSET,     0x10000000");
 
-#[export_name = "rt_hw_interrupt_disable"]
-pub extern "C" fn rt_hw_interrupt_disable(){
-    unsafe{
-        asm!("MRS     r0, PRIMASK");
-        asm!("CPSID   I");
-    }
-}
-
-#[export_name = "rt_hw_interrupt_enable"]
-pub extern "C" fn rt_hw_interrupt_enable(_level:isize){
-    unsafe{
-        asm!("MSR     PRIMASK, r0");
-    }
-}
-
-#[no_mangle]
-unsafe extern "C" fn rt_hw_context_switch_base() {
-    asm!("LDR   r2, ={}",sym cpuport::RT_THREAD_SWITCH_INTERRUPT_FLAG);
-    asm!("LDR   r3, [r2]");
-    asm!("CMP   r3, #1");
-    asm!("BEQ   0f");
-    asm!("MOV   r3, #1");
-    asm!("STR   r3, [r2]");
-
-    asm!("LDR   r2, ={}",sym cpuport::RT_INTERRUPT_FROM_THREAD);
-    asm!("STR   r0, [r2]");
-
-    asm!("0:");
-    asm!("LDR   r2, ={}",sym cpuport::RT_INTERRUPT_TO_THREAD);
-    asm!("STR   r1, [r2]");
-
-    asm!("LDR   r0, =NVIC_INT_CTRL");
-    asm!("LDR   r1, =NVIC_PENDSVSET");
-    asm!("STR   r1, [r0]");
-}
-
-#[no_mangle]
-unsafe extern "C" fn rt_hw_context_switch_to_base() {
-    asm!("LDR   r1, ={}",sym cpuport::RT_INTERRUPT_TO_THREAD);
-    asm!("STR   r0, [r1]");
-    asm!("MRS   r2, CONTROL");
-    asm!("BIC   r2, #0x04   ");
-    asm!("MSR   CONTROL, r2 ");
-    asm!("LDR   r1, ={}",sym cpuport::RT_INTERRUPT_FROM_THREAD);
-    asm!("MOV   r0, #0x0");
-    asm!("STR   r0, [r1]");
-    asm!("LDR   r1, ={}",sym cpuport::RT_THREAD_SWITCH_INTERRUPT_FLAG);
-    asm!("MOV   r0, #1");
-    asm!("STR   r0, [r1]");
-    asm!("LDR   r0, =NVIC_SYSPRI2");
-    asm!("LDR   r1, =NVIC_PENDSV_PRI");
-    asm!("LDR.W r2, [r0,#0x00]");
-    asm!("ORR   r1,r1,r2");
-    asm!("STR   r1, [r0]");
-    asm!("LDR   r0, =NVIC_INT_CTRL");
-    asm!("LDR   r1, =NVIC_PENDSVSET");
-    asm!("STR   r1, [r0]");
-    asm!("LDR   r0, =SCB_VTOR");
-    asm!("LDR   r0, [r0]");
-    asm!("LDR   r0, [r0]");
-    asm!("NOP");
-    asm!("MSR   msp, r0");
-    asm!("CPSIE F");
-    asm!("CPSIE I");
-    asm!("DSB");
-    asm!("ISB");
-}
-
 #[export_name = "SysTick_Handler"]
 unsafe extern "C" fn sys_tick_handler() {
-    asm!("bl kernel_sys_tick");
+    kernel::sys_tick();
 }
 
 #[export_name = "PendSV_Handler"]
@@ -123,9 +55,7 @@ unsafe extern "C" fn pend_sv_handler() {
 }
 
 #[export_name = "SystemInit"]
-extern "C" fn system_init() {
-
-}
+extern "C" fn system_init() {}
 
 #[no_mangle]
 fn __libc_init_array() {
@@ -162,4 +92,100 @@ unsafe extern "C" fn reset_handler() {
     asm!("bl    __libc_init_array");
     asm!("bl    entry");
     asm!("bx    lr");
+}
+
+use kernel::LibcpuTrait;
+use kernel::thread::Thread;
+
+struct Libcpu;
+
+impl Libcpu {
+    fn rt_hw_context_switch_base(&self) {
+        unsafe{
+            asm!("MOV   r0, r1");
+            asm!("MOV   r1, r2");
+            asm!("MOV   r2, r3");
+            asm!("MOV   r3, r4");
+            asm!("LDR   r2, ={}",sym cpuport::RT_THREAD_SWITCH_INTERRUPT_FLAG);
+            asm!("LDR   r3, [r2]");
+            asm!("CMP   r3, #1");
+            asm!("BEQ   0f");
+            asm!("MOV   r3, #1");
+            asm!("STR   r3, [r2]");
+            asm!("LDR   r2, ={}",sym cpuport::RT_INTERRUPT_FROM_THREAD);
+            asm!("STR   r0, [r2]");
+            asm!("0:");
+            asm!("LDR   r2, ={}",sym cpuport::RT_INTERRUPT_TO_THREAD);
+            asm!("STR   r1, [r2]");
+            asm!("LDR   r0, =NVIC_INT_CTRL");
+            asm!("LDR   r1, =NVIC_PENDSVSET");
+            asm!("STR   r1, [r0]");
+        }
+    }
+}
+
+impl LibcpuTrait for Libcpu {
+    fn context_switch_to(&self, _sp: *mut ()){
+        unsafe{
+            asm!("MOV   r0, r1");
+            asm!("LDR   r1, ={}",sym cpuport::RT_INTERRUPT_TO_THREAD);
+            asm!("STR   r0, [r1]");
+            asm!("MRS   r2, CONTROL");
+            asm!("BIC   r2, #0x04   ");
+            asm!("MSR   CONTROL, r2 ");
+            asm!("LDR   r1, ={}",sym cpuport::RT_INTERRUPT_FROM_THREAD);
+            asm!("MOV   r0, #0x0");
+            asm!("STR   r0, [r1]");
+            asm!("LDR   r1, ={}",sym cpuport::RT_THREAD_SWITCH_INTERRUPT_FLAG);
+            asm!("MOV   r0, #1");
+            asm!("STR   r0, [r1]");
+            asm!("LDR   r0, =NVIC_SYSPRI2");
+            asm!("LDR   r1, =NVIC_PENDSV_PRI");
+            asm!("LDR.W r2, [r0,#0x00]");
+            asm!("ORR   r1,r1,r2");
+            asm!("STR   r1, [r0]");
+            asm!("LDR   r0, =NVIC_INT_CTRL");
+            asm!("LDR   r1, =NVIC_PENDSVSET");
+            asm!("STR   r1, [r0]");
+            asm!("LDR   r0, =SCB_VTOR");
+            asm!("LDR   r0, [r0]");
+            asm!("LDR   r0, [r0]");
+            asm!("NOP");
+            asm!("MSR   msp, r0");
+            asm!("CPSIE F");
+            asm!("CPSIE I");
+            asm!("DSB");
+            asm!("ISB");
+        }
+    }
+    fn context_switch(&self, _from_sp: *mut (), _to_sp: *mut ()){
+        self.rt_hw_context_switch_base();
+    }
+    fn context_switch_interrupt(&self, _from_sp: *mut (), _to_sp: *mut (), _from_thread:&mut Thread, _to_thread:&mut Thread){
+        self.rt_hw_context_switch_base();
+    }
+    fn interrupt_disable(&self) -> isize{
+        let level:isize;
+        unsafe{
+            asm!("MRS     r0, PRIMASK");
+            asm!("CPSID   I");
+            asm!("mov {}, r0", out(reg) level);
+        }
+        level
+    }
+    fn interrupt_enable(&self, _level:isize){
+        unsafe{
+            asm!("MSR     PRIMASK, r1");
+        }
+    }
+    fn stack_init(&self, entry: fn(*mut ()), parameter:*mut (), stack_addr:*mut (), exit: fn()) -> *mut (){
+        cpuport::rt_hw_stack_init(entry, parameter, stack_addr, exit)
+    }
+}
+
+#[kernel::macros::init_export("0.0")]
+fn libcpu_init() {
+    let mut libcpu = Libcpu{};
+    let system = kernel::system!();
+    system.libcpu_trait_init(&mut libcpu as *mut dyn LibcpuTrait);
 }

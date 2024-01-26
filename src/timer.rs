@@ -2,7 +2,6 @@ use crate::system;
 use crate::system::System;
 use crate::tick;
 use crate::list::List;
-use crate::libcpu;
 
 #[derive(PartialEq)]
 #[derive(Copy, Clone)]
@@ -31,7 +30,8 @@ impl Timer {
         timer.as_mut().unwrap()
     }
     pub fn start(&mut self){
-        let level = libcpu::interrupt_disable();
+        let libcpu = system!().libcpu();
+        let level = libcpu.interrupt_disable();
         self.timeout_tick = tick!(get()) + self.init_tick;
         let system = system!();
         let timer_list = system.timer_list_mut();
@@ -45,7 +45,7 @@ impl Timer {
             break;
         }
         unsafe{&mut *current}.insert_after(&mut self.list);
-        libcpu::interrupt_enable(level);
+        libcpu.interrupt_enable(level);
     }
 
     pub fn control(&mut self,tick:usize){
@@ -64,7 +64,8 @@ impl System {
     }
 
     pub fn check(&self, tick:usize){
-        let level = libcpu::interrupt_disable();
+        let libcpu = self.libcpu();
+        let level = libcpu.interrupt_disable();
         let timer_list = system!(timer_list_mut());
         let mut _current = timer_list as *mut List<Timer>;
         for node in timer_list.iter_mut() {
@@ -75,6 +76,6 @@ impl System {
                 (timer.timeout_func)(timer.parameter);
             }
         }
-        libcpu::interrupt_enable(level);
+        libcpu.interrupt_enable(level);
     }
 }

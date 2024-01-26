@@ -1,8 +1,7 @@
 use crate::thread::{Thread,Status};
 use crate::list::List;
-use crate::thread_self;
+use crate::{thread_self, system};
 use crate::scheduler;
-use crate::libcpu;
 use crate::interrupt_nest;
 use crate::include::{*};
 
@@ -28,14 +27,12 @@ impl Scheduler {
         }
     }
 
-    // pub fn current_thread(&self)->Option<&Thread>{
-    //     self.current_thread
-    // }
-    pub fn schedule(&mut self){ //rt_schedule
+    pub fn schedule(&mut self){
         if self.ready_priority_group == 0 {
             return;
         }
-        let level = libcpu::interrupt_disable();
+        let libcpu = system!().libcpu();
+        let level = libcpu.interrupt_disable();
          /* need_insert_from_thread: need to insert from_thread to ready queue */
         let mut need_insert_from_thread = false;
         let mut highest_ready_priority = 0;
@@ -71,34 +68,31 @@ impl Scheduler {
 
             let from_sp = (from_thread.sp_mut()) as *mut *mut () as *mut ();
             let to_sp = (to_thread.sp_mut()) as *mut *mut () as *mut ();
-
             if interrupt_nest!() == 0 {
-                libcpu::rt_hw_context_switch(from_sp, to_sp);
-                libcpu::interrupt_enable(level);
+                libcpu.context_switch(from_sp, to_sp);
+                libcpu.interrupt_enable(level);
                 return;
             }
             else {
-                libcpu::rt_hw_context_switch_interrupt(from_sp,to_sp,from_thread,to_thread);
+                libcpu.context_switch_interrupt(from_sp,to_sp,from_thread,to_thread);
             }
 
         }else {
             scheduler!(remove_thread(thread_self!().unwrap()));
             current_thread.set_stat(Status::Running as u8 | (current_thread.stat() & !(Status::StatMask as u8)));
         }
-        libcpu::interrupt_enable(level);
+        libcpu.interrupt_enable(level);
 
     }
-    // pub fn hardware(&self)->&HardWare{
-    //     self.hw
-    // }
 
     
     pub fn insert_thread(&mut self,thread:&mut Thread){
-        let level = libcpu::interrupt_disable();
+        let libcpu = system!().libcpu();
+        let level = libcpu.interrupt_disable();
         if let Some(current_thread) = self.current_thread() {
             if thread == current_thread {
                 thread.set_stat(Status::Running as u8|thread.stat() & !(Status::StatMask as u8));
-                libcpu::interrupt_enable(level);
+                libcpu.interrupt_enable(level);
                 return;
             }
         }
@@ -109,15 +103,16 @@ impl Scheduler {
             self.priority_table[thread.current_priority() as usize].insert_after(thread.list_mut());
         }
         self.ready_priority_group |= thread.number_mask() as usize;
-        libcpu::interrupt_enable(level);
+        libcpu.interrupt_enable(level);
     }
     pub fn remove_thread(&mut self, thread:&mut Thread){
-        let level = libcpu::interrupt_disable();
+        let libcpu = system!().libcpu();
+        let level = libcpu.interrupt_disable();
         thread.list_mut().remove();
         if self.priority_table[thread.current_priority() as usize].isempty() {
             self.ready_priority_group &= !(thread.number_mask() as usize);
         }
-        libcpu::interrupt_enable(level);
+        libcpu.interrupt_enable(level);
     }
 
     pub fn current_thread(&mut self) -> Option<&mut Thread> {
@@ -138,13 +133,14 @@ impl Scheduler {
     }
 
     pub fn start(&mut self) {
+        let system = system!();
         let mut highest_ready_priority = 0;
         let to_thread = self.get_highest_priority_thread_mut(&mut highest_ready_priority);
-        scheduler!(remove_thread(to_thread));
+        system.scheduler_mut().remove_thread(to_thread);
         to_thread.set_stat(Status::Running as u8);
-        scheduler!(set_current_thread(Some(to_thread)));
+        system.scheduler_mut().set_current_thread(Some(to_thread));
         let sp = to_thread.sp_mut() as *mut *mut () as *mut ();
-        libcpu::rt_hw_context_switch_to(sp);
+        system.libcpu().context_switch_to(sp);
         unreachable!();
     }
 }

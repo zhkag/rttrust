@@ -1,7 +1,6 @@
 use crate::list::List;
 use crate::system::System;
 use crate::system;
-use crate::libcpu;
 use crate::include::NAME_MAX;
 
 #[allow(dead_code)]
@@ -149,26 +148,28 @@ impl ObjectInformation {
 
 impl System {
     fn install_object(&mut self, r#type:ObjectClassType, list:&mut List<Object>){
-        let level = libcpu::interrupt_disable();
+        let libcpu = system!().libcpu();
+        let level = libcpu.interrupt_disable();
         for index in 0..ObjectInfoType::Unknown as usize {
             if self.object_container[index].object_class_type == r#type {
                 self.object_container[index].object_list.insert_after(list);
-                libcpu::interrupt_enable(level);
+                libcpu.interrupt_enable(level);
                 return;
             }
         }
-        libcpu::interrupt_enable(level);
+        libcpu.interrupt_enable(level);
     }
 
     pub fn get_object_information(&mut self, r#type:ObjectClassType) -> Option<&mut ObjectInformation>{
-        let level = libcpu::interrupt_disable();
+        let libcpu = system!().libcpu();
+        let level = libcpu.interrupt_disable();
         for index in 0..ObjectInfoType::Unknown as usize {
             if self.object_container[index].object_class_type == r#type {
-                libcpu::interrupt_enable(level);
+                libcpu.interrupt_enable(level);
                 return Some(&mut self.object_container[index]);
             }
         }
-        libcpu::interrupt_enable(level);
+        libcpu.interrupt_enable(level);
         None
     }
 

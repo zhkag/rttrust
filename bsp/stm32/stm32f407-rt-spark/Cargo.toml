@@ -11,4 +11,5 @@ path = "bin.rs"
 
 [dependencies]
 kernel = { path = "../../.." }
+libcpu = { path = "../../../libcpu" }
 components = { path = "../../../components" }

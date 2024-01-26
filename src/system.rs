@@ -9,6 +9,8 @@ use crate::timer::Timer;
 use crate::irq::Interrupt;
 use crate::kservice;
 use crate::components;
+use crate::libcpu::Libcpu;
+use crate::libcpu::LibcpuTrait;
 
 static mut SYSTREM: Option<System> = None;
 
@@ -27,6 +29,7 @@ pub struct System{
     timer_list:List<Timer>,
     pub(super) object_container:[ObjectInformation; ObjectInfoType::Unknown as usize],
     interrupt:Interrupt,
+    pub libcpu: *mut dyn LibcpuTrait,
 }
 
 impl System {
@@ -46,6 +49,7 @@ impl System {
             timer_list:List::new(),
             object_container:[ObjectInformation::new(); ObjectInfoType::Unknown as usize],
             interrupt:Interrupt::init(),
+            libcpu:Libcpu::init(),
         };
         systerm
     }

@@ -1,54 +1,39 @@
-#[allow(unused_imports)]
-use libcpu;
+use crate::system::System;
 use crate::tick;
-use core::arch::asm;
 use crate::thread::Thread;
 use crate::interrupt_leave;
 use crate::interrupt_enter;
 
-#[export_name = "rt_hw_context_switch_to"]
-pub extern "C" fn rt_hw_context_switch_to(_sp: *mut ()) {
-    unsafe{asm!("bl   rt_hw_context_switch_to_base");}
-}
-
-#[export_name = "rt_hw_context_switch"]
-pub extern "C" fn rt_hw_context_switch(_from_sp: *mut (), _to_sp: *mut ()) {
-    unsafe{asm!("bl   rt_hw_context_switch_base");}
-}
-
-#[export_name = "rt_hw_context_switch_interrupt"]
-pub extern "C" fn rt_hw_context_switch_interrupt(_from_sp: *mut (), _to_sp: *mut (),_from_thread:&mut Thread,_to_thread:&mut Thread) {
-    unsafe{asm!("bl   rt_hw_context_switch_base");}
-}
-
-pub extern "C" fn interrupt_disable() -> isize{
-    let level:isize;
-    unsafe{
-        asm!("bl   rt_hw_interrupt_disable");
-        asm!("mov {}, r0", out(reg) level);
-    }
-    level
-}
-
-pub extern "C" fn interrupt_enable(_level:isize){
-    unsafe{asm!("bl   rt_hw_interrupt_enable");}
-}
-
-#[no_mangle]
-fn kernel_sys_tick() {
+pub fn sys_tick() {
     interrupt_enter!();
     tick!(increase());
     interrupt_leave!();
 }
 
+pub struct Libcpu;
 
-impl crate::hw::HardWare {
-    pub fn stack_init(_entry: fn(*mut ()), _parameter:*mut (),_stack_addr:*mut (),_exit: fn())->*mut (){
-        let stk:*mut ();
-        unsafe{
-            asm!("bl   rt_hw_stack_init");
-            asm!("mov {}, r0", out(reg) stk);
-        }
-        stk
+impl Libcpu {
+    pub fn init() -> *mut dyn LibcpuTrait{
+        let mut libcpu_instance = Libcpu{};
+        &mut libcpu_instance as *mut dyn LibcpuTrait
+    }
+}
+impl LibcpuTrait for Libcpu{}
+
+pub trait LibcpuTrait {
+    fn context_switch_to(&self, _sp: *mut ()){unreachable!();}
+    fn context_switch(&self, _from_sp: *mut (), _to_sp: *mut ()){unreachable!();}
+    fn context_switch_interrupt(&self, _from_sp: *mut (), _to_sp: *mut (),_from_thread:&mut Thread,_to_thread:&mut Thread){unreachable!();}
+    fn interrupt_disable(&self) -> isize{unreachable!();}
+    fn interrupt_enable(&self, _level:isize){unreachable!();}
+    fn stack_init(&self, _entry: fn(*mut ()), _parameter:*mut (),_stack_addr:*mut (),_exit: fn()) -> *mut (){unreachable!();}
+}
+
+impl System {
+    pub fn libcpu(&self) -> &dyn LibcpuTrait{
+        unsafe { &*(self.libcpu)}
+    }
+    pub fn libcpu_trait_init(&mut self,item: *mut dyn LibcpuTrait) {
+        self.libcpu = item;
     }
 }

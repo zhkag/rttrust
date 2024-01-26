@@ -1,4 +1,3 @@
-
 pub static mut RT_INTERRUPT_TO_THREAD: u32 = 0;
 pub static mut RT_INTERRUPT_FROM_THREAD: u32 = 0;
 pub static mut RT_THREAD_SWITCH_INTERRUPT_FLAG: u32 = 0;
@@ -28,8 +27,7 @@ struct StackFrame {
     exception_stack_frame: ExceptionStackFrame,
 }
 
-#[no_mangle]
-fn rt_hw_stack_init(entry: fn(*mut ()), parameter:*mut (),stack_addr:*mut (),exit: fn())->*mut (){
+pub fn rt_hw_stack_init(entry: fn(*mut ()), parameter:*mut (),stack_addr:*mut (),exit: fn())->*mut (){
     let mut stk: *mut () = (stack_addr as usize + core::mem::size_of::<u32>()) as *mut ();
     stk = ((stk as usize) & !7) as *mut ();
     stk = (stk as usize - core::mem::size_of::<StackFrame>()) as *mut ();

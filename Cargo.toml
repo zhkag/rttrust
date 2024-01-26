@@ -6,7 +6,6 @@ readme = "README.md"
 authors = ["zhangkang <zhangkang@rt-thread.com>"]
 
 [dependencies]
-libcpu = { path = "libcpu" }
 macros = { path = "macros", version = "=0.1.0" }
 
 [build-dependencies]

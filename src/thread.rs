@@ -1,10 +1,9 @@
-use crate::hw::HardWare;
 use crate::object::Object;
 use crate::timer::Timer;
 use crate::{scheduler, schedule, scheduler::Scheduler};
 use crate::list::List;
 use crate::thread_self;
-use crate::libcpu;
+use crate::system;
 
 // use core::ops::{BitAnd,BitOr,Not};
 
@@ -109,9 +108,10 @@ impl Thread {
 
     fn thread_timeout(parameter:*mut ()){
         let thread = unsafe{&mut *(parameter as *mut Thread)};
-        let level = libcpu::interrupt_disable();
+        let libcpu = system!().libcpu();
+        let level = libcpu.interrupt_disable();
         thread.list.remove();
-        libcpu::interrupt_enable(level);
+        libcpu.interrupt_enable(level);
         scheduler!(insert_thread(thread));
         schedule!();
     }
@@ -129,8 +129,9 @@ impl Thread {
         let thread_mut = thread.as_mut().unwrap();
         thread_mut.parent.init(crate::object::ObjectClassType::Thread, name);
 
+        let libcpu = system!().libcpu();
         let ptr = thread_mut.stack_addr as u32;
-        thread_mut.sp = HardWare::stack_init(thread_mut.entry, thread_mut.parameter,
+        thread_mut.sp = libcpu.stack_init(thread_mut.entry, thread_mut.parameter,
                              (ptr+thread_mut.stack_size-16)as *mut (), Self::thread_exit);
 
         let timer_parameter = thread_mut.as_mut_ptr() as *mut ();
@@ -141,10 +142,11 @@ impl Thread {
     }
 
     fn suspend_with_flag(&mut self, suspend_flag:SuspendWithFlag) -> bool{
-        let level = libcpu::interrupt_disable();
+        let libcpu = system!().libcpu();
+        let level = libcpu.interrupt_disable();
         let stat = self.stat & Status::StatMask as u8;
         if (stat != Status::Ready as u8) && (stat != Status::Running as u8){
-            libcpu::interrupt_enable(level);
+            libcpu.interrupt_enable(level);
             return false;
         }
         scheduler!(remove_thread(self));
@@ -153,21 +155,22 @@ impl Thread {
             _ => unreachable!(),
         };
         self.stat = stat | (self.stat & !(Status::StatMask as u8));
-        libcpu::interrupt_enable(level);
+        libcpu.interrupt_enable(level);
         true
     }
 
     pub fn sleep(&mut self, tick:usize){
-        let level = libcpu::interrupt_disable();
+        let libcpu = system!().libcpu();
+        let level = libcpu.interrupt_disable();
         if true == self.suspend_with_flag(SuspendWithFlag::INTERRUPTIBLE){
             let timer = self.thread_timer.as_mut().unwrap();
             timer.control(tick);
             timer.start();
-            libcpu::interrupt_enable(level);
+            libcpu.interrupt_enable(level);
             schedule!();
         }
         else {
-            libcpu::interrupt_enable(level);
+            libcpu.interrupt_enable(level);
         }
     }
 

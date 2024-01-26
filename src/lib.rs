@@ -15,6 +15,7 @@ mod irq;
 mod include;
 mod components;
 
+pub use libcpu::{LibcpuTrait, sys_tick};
 use core::panic::PanicInfo;
 
 pub extern crate macros;

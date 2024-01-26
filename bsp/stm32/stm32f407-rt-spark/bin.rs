@@ -2,6 +2,8 @@
 #![no_std]
 #[allow(unused_imports)]
 use components;
+#[allow(unused_imports)]
+use libcpu;
 
 mod board;
 mod applications;
