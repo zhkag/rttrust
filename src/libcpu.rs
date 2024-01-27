@@ -10,16 +10,6 @@ pub fn sys_tick() {
     interrupt_leave!();
 }
 
-pub struct Libcpu;
-
-impl Libcpu {
-    pub fn init() -> *mut dyn LibcpuTrait{
-        let mut libcpu_instance = Libcpu{};
-        &mut libcpu_instance as *mut dyn LibcpuTrait
-    }
-}
-impl LibcpuTrait for Libcpu{}
-
 pub trait LibcpuTrait {
     fn context_switch_to(&self, _sp: *mut ()){unreachable!();}
     fn context_switch(&self, _from_sp: *mut (), _to_sp: *mut ()){unreachable!();}
@@ -31,9 +21,9 @@ pub trait LibcpuTrait {
 
 impl System {
     pub fn libcpu(&self) -> &dyn LibcpuTrait{
-        unsafe { &*(self.libcpu)}
+        unsafe { &*(self.libcpu.unwrap())}
     }
     pub fn libcpu_trait_init(&mut self,item: *mut dyn LibcpuTrait) {
-        self.libcpu = item;
+        self.libcpu = Some(item);
     }
 }
