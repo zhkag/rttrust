@@ -45,7 +45,7 @@ pub enum DeviceClassType
 pub struct Device
 {
     pub(super) parent:Object,
-    r#type:ObjectClassType,                     //< device type */
+    r#type:DeviceClassType,                     //< device type */
     flag:u16,                     //< device flag */
     open_flag:u16,                //< device open flag */
     ref_count:u8,                //< reference count */
@@ -66,6 +66,21 @@ pub trait DeviceOps {
 
 #[allow(dead_code)]
 impl Device {
+    pub fn new() -> Self{
+        let derive = Self{
+            parent: Object::new(),
+            r#type: DeviceClassType::Unknown,
+            flag: 0,
+            open_flag:0,
+            ref_count:0,
+            device_id:0,
+            user_data:core::ptr::null_mut(),
+        };
+        derive
+    }
+    pub fn init(&mut self, r#type: DeviceClassType){
+        self.r#type = r#type;
+    }
     pub fn find(&self, name: &str) -> Option<&mut Device>{
         let system = system!();
         if let Some(object) = system.object_find(name,ObjectClassType::Device){

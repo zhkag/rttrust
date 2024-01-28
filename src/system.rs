@@ -63,10 +63,10 @@ impl System {
         main_thread.startup();
     }
     fn init(&mut self)  {
+        self.object_container_init();
         HardWare::board_init();
         components::board_init();
         kservice::show_version();
-        self.object_container_init();
         self.timer_init();
         self.scheduler_init();
         self.main_app_init();
@@ -75,6 +75,7 @@ impl System {
 
     fn object_container_init(&mut self) {
         self.object_container[ObjectInfoType::Thread as usize].init(ObjectClassType::Thread,core::mem::size_of::<Thread>().try_into().unwrap());
+        self.object_container[ObjectInfoType::Device as usize].init(ObjectClassType::Device,core::mem::size_of::<Thread>().try_into().unwrap());
     }
 
     fn timer_init(&mut self) {

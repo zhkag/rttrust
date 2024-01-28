@@ -1,1 +1,1 @@
-mod pin;
+pub mod pin;

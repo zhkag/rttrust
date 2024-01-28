@@ -187,5 +187,5 @@ impl LibcpuTrait for Libcpu {
 fn libcpu_init() {
     let mut libcpu = Libcpu{};
     let system = kernel::system!();
-    system.libcpu_trait_init(&mut libcpu as *mut dyn LibcpuTrait);
+    system.libcpu_trait_init(&mut libcpu);
 }
