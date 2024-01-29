@@ -25,8 +25,3 @@ fn main() {
     }
 }
 
-#[export_name = "USART1_IRQHandler"]
-unsafe extern "C" fn usart1_irqhandler() {
-
-}
-

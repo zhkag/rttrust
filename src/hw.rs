@@ -350,8 +350,8 @@ fn usart_init(){
 pub fn putc(ch:char)
 {
     let usart1 = unsafe {&mut *(USART1_BASE as *mut UsartTypeDef)};
-    while (usart1.sr & 0x40) == 0{}     /* 等待上一个字符发送完成 */
     usart1.dr = ch as u32;
+    while (usart1.sr & 0x40) == 0{}     /* 等待字符发送完成 */
 }
 
 impl HardWare {
@@ -359,5 +359,13 @@ impl HardWare {
         clock_init();
         systick_init();
         usart_init();
+    }
+}
+
+#[export_name = "USART1_IRQHandler"]
+unsafe extern "C" fn usart1_irqhandler() {
+    let usart1 = unsafe {&mut *(USART1_BASE as *mut UsartTypeDef)};
+    if usart1.sr & (1 << 5) != 0 {
+        putc(char::from_u32(usart1.dr).unwrap());
     }
 }
