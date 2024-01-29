@@ -15,22 +15,12 @@ fn main() {
                                                 stack_start, stack_size, 20, 4);
     test_thread.startup();
 
-    let ahb1enr_ptr: *mut u32 = AHB1ENR as *mut u32;
-    unsafe {
-        let ahb1enr = &mut *ahb1enr_ptr;
-        *ahb1enr |= 1 << 5;
-    }
-
-    let gpiof_base_ptr: *mut GPIOTypeDef = GPIOF_BASE as *mut GPIOTypeDef;
-    let gpiof_base = unsafe { &mut *gpiof_base_ptr};
-    sys_gpio_set(gpiof_base, 1 << 11,1, 0, 1, 1);
-    let pin = DevicePin::find("pin").unwrap();
-    let led_red = pin.ops().pin_get("PF.12");
-    pin.ops().pin_mode(led_red,0);
+    let led_red = pin_get("PF.12");
+    pin_mode(led_red,0);
     loop {
-        pin.ops().pin_write(led_red, true);
+        pin_write(led_red, true);
         kernel::thread_sleep!(500);
-        pin.ops().pin_write(led_red, false);
+        pin_write(led_red, false);
         kernel::thread_sleep!(500);
     }
 }

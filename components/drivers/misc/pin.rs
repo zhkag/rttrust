@@ -109,3 +109,25 @@ impl DevicePinMode {
         Some(self as *mut DevicePinMode as *mut())
     }
 }
+
+fn pin_ops() -> &'static mut dyn PinOps{
+    let _hw_pin = unsafe {&mut _HW_PIN};
+    let _hw_pin_mut = _hw_pin.as_mut().unwrap();
+    _hw_pin_mut.ops()
+}
+
+pub fn pin_get(name:&str) -> usize{
+    pin_ops().pin_get(name)
+}
+
+pub fn pin_mode(pin: usize, mode: u8){
+    pin_ops().pin_mode(pin, mode);
+}
+
+pub fn pin_write(pin: usize, value: bool){
+    pin_ops().pin_write(pin, value);
+}
+
+pub fn pin_read(pin: usize) -> bool{
+    pin_ops().pin_read(pin)
+}
