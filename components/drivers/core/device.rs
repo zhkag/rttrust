@@ -59,9 +59,9 @@ pub trait DeviceOps {
     fn init(&mut self) -> isize { 0 }
     fn open(&mut self, _oflag:u16) -> isize { 0 }
     fn close(&mut self) -> isize { 0 }
-    fn read(&mut self, _pos:isize, _buffer: *mut (), _size:usize) -> isize { 0 }
-    fn write(&mut self, _pos:isize, _buffer: *const (), _size:usize) -> isize { 0 }
-    fn control(&mut self, _size:usize) -> isize { 0 }
+    fn read(&mut self, _pos:isize, _buffer: Option<*mut ()>, _size:usize) -> isize { 0 }
+    fn write(&mut self, _pos:isize, _buffer: Option<*const ()>, _size:usize) -> isize { 0 }
+    fn control(&mut self, _cmd:usize, _args: Option<*mut ()>) -> isize { 0 }
 }
 
 #[allow(dead_code)]
@@ -81,22 +81,22 @@ impl Device {
     pub fn init(&mut self, r#type: DeviceClassType){
         self.r#type = r#type;
     }
-    pub fn find(&self, name: &str) -> Option<&mut Device>{
+    pub fn find(name: &str) -> Option<&mut Device>{
         let system = system!();
         if let Some(object) = system.object_find(name,ObjectClassType::Device){
-            return Some(self.object_to_device(object));
+            return Some(Device::object_to_device(object));
         }
         None
     }
 
     pub fn register(&mut self, name: &str){
-        if self.find(name).is_some() {
+        if Device::find(name).is_some() {
             return ;
         }
         self.parent.init(ObjectClassType::Device, name);
     }
 
-    fn object_to_device(&self, parent: *mut Object) -> &mut Device {
+    fn object_to_device(parent: *mut Object) -> &'static mut Device {
         #[allow(deref_nullptr)]
         unsafe { &mut *((parent as usize - (&(&*(0 as *const Device)).parent) as *const Object as usize) as *mut Device) }
     }

@@ -1,4 +1,5 @@
 use crate::{*};
+use components::pin::{*};
 
 #[no_mangle]
 fn main() {
@@ -23,12 +24,14 @@ fn main() {
     let gpiof_base_ptr: *mut GPIOTypeDef = GPIOF_BASE as *mut GPIOTypeDef;
     let gpiof_base = unsafe { &mut *gpiof_base_ptr};
     sys_gpio_set(gpiof_base, 1 << 11,1, 0, 1, 1);
-    sys_gpio_set(gpiof_base, 1 << 12,1, 0, 1, 1);
-    sys_gpio_pin_set(gpiof_base, 1 << 11,false);
-    sys_gpio_pin_set(gpiof_base, 1 << 12,true);
+    let pin = DevicePin::find("pin").unwrap();
+    let led_red = pin.ops().pin_get("PF.12");
+    pin.ops().pin_mode(led_red,0);
     loop {
+        pin.ops().pin_write(led_red, true);
         kernel::thread_sleep!(500);
-        gpiof_base.odr ^= 1 << 12;
+        pin.ops().pin_write(led_red, false);
+        kernel::thread_sleep!(500);
     }
 }
 
