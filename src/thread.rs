@@ -2,7 +2,7 @@ use crate::object::Object;
 use crate::timer::Timer;
 use crate::{scheduler, schedule, scheduler::Scheduler};
 use crate::list::List;
-use crate::thread_self;
+use crate::{thread_self, Error};
 use crate::system;
 
 // use core::ops::{BitAnd,BitOr,Not};
@@ -141,13 +141,13 @@ impl Thread {
         thread_mut
     }
 
-    fn suspend_with_flag(&mut self, suspend_flag:SuspendWithFlag) -> bool{
+    fn suspend_with_flag(&mut self, suspend_flag:SuspendWithFlag) -> Result<(),Error>{
         let libcpu = system!().libcpu();
         let level = libcpu.interrupt_disable();
         let stat = self.stat & Status::StatMask as u8;
         if (stat != Status::Ready as u8) && (stat != Status::Running as u8){
             libcpu.interrupt_enable(level);
-            return false;
+            return Err(Error::Error);
         }
         scheduler!(remove_thread(self));
         let stat = match suspend_flag {
@@ -156,22 +156,27 @@ impl Thread {
         };
         self.stat = stat | (self.stat & !(Status::StatMask as u8));
         libcpu.interrupt_enable(level);
-        true
+        Ok(())
     }
 
-    pub fn sleep(&mut self, tick:usize){
+    pub fn sleep(&mut self, tick:usize) -> Result<(),Error>{
+        let result: Result<(), Error>;
         let libcpu = system!().libcpu();
         let level = libcpu.interrupt_disable();
-        if true == self.suspend_with_flag(SuspendWithFlag::INTERRUPTIBLE){
-            let timer = self.thread_timer.as_mut().unwrap();
-            timer.control(tick);
-            timer.start();
-            libcpu.interrupt_enable(level);
-            schedule!();
+        result = self.suspend_with_flag(SuspendWithFlag::INTERRUPTIBLE);
+        match result {
+            Ok(()) => {
+                let timer = self.thread_timer.as_mut().unwrap();
+                timer.control(tick);
+                timer.start();
+                libcpu.interrupt_enable(level);
+                schedule!();
+            },
+            Err(_e) => {
+                libcpu.interrupt_enable(level);
+            },
         }
-        else {
-            libcpu.interrupt_enable(level);
-        }
+        result
     }
 
     pub fn sp_mut(&mut self) ->&mut *mut (){

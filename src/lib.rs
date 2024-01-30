@@ -15,6 +15,8 @@ mod irq;
 mod include;
 mod components;
 
+pub use core::result::Result as Result;
+
 pub use libcpu::{LibcpuTrait, sys_tick};
 use core::panic::PanicInfo;
 
@@ -29,3 +31,26 @@ fn panic(info: &PanicInfo) -> ! {
     }
     loop {}
 }
+
+#[derive(Copy, Clone)]
+pub enum Error {
+    Ok,
+    Error,
+    TimeOut,
+    Full,
+    Empty,
+    NoMem,
+    NoSys,
+    Busy,
+    IO,
+    Intr,
+    Inval,
+    NoEnt,
+    NoSpc,
+    Perm,
+    Trap,
+    Fault,
+    NoBufs,
+}
+
+pub type ResultE<R> = Result<R, Error>;
