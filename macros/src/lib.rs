@@ -33,3 +33,54 @@ pub fn init_export(attr: TokenStream, item: TokenStream) -> TokenStream {
     };
     TokenStream::from(expanded)
 }
+
+#[proc_macro_attribute]
+pub fn sh_function_expopt(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let mut cmd: String = Default::default();
+    let mut desc: String = Default::default();
+    let input = parse_macro_input!(item as ItemFn);
+    let func = &input.sig.ident;
+    let mut into_iter = attr.clone().into_iter();
+    match attr.clone().into_iter().count() {
+        0 =>{
+            cmd = func.to_string();
+            desc = cmd.clone()+ " cmd";
+        },
+        1 =>{
+            if let Some(TokenTree::Literal(lit)) = into_iter.next() {
+                desc = lit.to_string().trim_matches('"').to_string();
+            }
+            cmd = func.to_string();
+        },
+        2 =>{
+            if let Some(token_tree) = into_iter.next() {
+                cmd = token_tree.to_string();
+            }
+            if let Some(TokenTree::Literal(lit)) = into_iter.next().into_iter().next() {
+                desc = lit.to_string().trim_matches('"').to_string();
+            }
+        },
+        3 =>{
+            if let Some(token_tree) = into_iter.next() {
+                cmd = token_tree.to_string();
+            }
+            if let Some(TokenTree::Literal(lit)) = into_iter.next().into_iter().next().into_iter().next() {
+                desc = lit.to_string().trim_matches('"').to_string();
+            }
+        },
+        _ =>{},
+    }
+    let static_ident: Ident = syn::parse_str(format!("__fsym_{}", cmd).as_str())
+                            .expect("Failed to parse Ident from string");
+    let expanded = quote! {
+        #[used]
+        #[link_section = "FSymTab"]
+        static #static_ident: ShSyscall = ShSyscall{
+            name:#cmd,
+            desc:#desc,
+            func:#func,
+        };
+        #input
+    };
+    TokenStream::from(expanded)
+}
