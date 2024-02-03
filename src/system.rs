@@ -1,5 +1,5 @@
 use crate::object::{ObjectInformation,ObjectClassType,ObjectInfoType};
-use crate::println;
+use crate::{println, Error};
 use crate::scheduler::Scheduler;
 use crate::hw::HardWare;
 use crate::thread::Thread;
@@ -12,10 +12,10 @@ use crate::components;
 use crate::libcpu::LibcpuTrait;
 
 static mut SYSTREM: Option<System> = None;
-
-fn main_fun(_parameter:*mut ()) {
+fn main_fun(_parameter:*mut ()) -> Result<(),Error>{
     components::init();
-    unsafe{core::arch::asm!("bl main");}
+    extern {#[allow(improper_ctypes)]fn main() -> Result<(),Error>;}
+    unsafe{main()}
 }
 
 const MAIN_THREAD_STACK_SIZE: usize = 10240;

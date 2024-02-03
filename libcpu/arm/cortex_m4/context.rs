@@ -96,6 +96,7 @@ unsafe extern "C" fn reset_handler() {
 
 use kernel::LibcpuTrait;
 use kernel::thread::Thread;
+use kernel::Error;
 
 struct Libcpu;
 
@@ -178,7 +179,7 @@ impl LibcpuTrait for Libcpu {
             asm!("MSR     PRIMASK, r1");
         }
     }
-    fn stack_init(&self, entry: fn(*mut ()), parameter:*mut (), stack_addr:*mut (), exit: fn()) -> *mut (){
+    fn stack_init(&self, entry: fn(*mut ())-> Result<(),Error>, parameter:*mut (), stack_addr:*mut (), exit: fn(_err:Result<(),Error>)) -> *mut (){
         cpuport::rt_hw_stack_init(entry, parameter, stack_addr, exit)
     }
 }

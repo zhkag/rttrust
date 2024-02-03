@@ -32,6 +32,7 @@ fn panic(info: &PanicInfo) -> ! {
     loop {}
 }
 
+#[derive(PartialEq)]
 #[derive(Copy, Clone)]
 pub enum Error {
     Ok,
@@ -51,6 +52,32 @@ pub enum Error {
     Trap,
     Fault,
     NoBufs,
+}
+
+impl core::fmt::Display for Error {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "Error type : ")?;
+        let str = match self {
+            Self::Ok => "There is no error",
+            Self::Error => "A generic/unknown error happens",
+            Self::TimeOut => "Timed out",
+            Self::Full => "The resource is full",
+            Self::Empty => "The resource is empty",
+            Self::NoMem => "No memory",
+            Self::NoSys => "Function not implemented",
+            Self::Busy => "Busy",
+            Self::IO => "IO error",
+            Self::Intr => "Interrupted system call",
+            Self::Inval => "Invalid argument",
+            Self::NoEnt => "No entry",
+            Self::NoSpc => "No space left",
+            Self::Perm => "Operation not permitted",
+            Self::Trap => "Trap event",
+            Self::Fault => "Bad address ",
+            Self::NoBufs => "No buffer space is available",
+        };
+        write!(f, "{}!",str)
+    }
 }
 
 pub type ResultE<R> = Result<R, Error>;

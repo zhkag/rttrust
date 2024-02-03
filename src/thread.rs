@@ -1,3 +1,4 @@
+use crate::println;
 use crate::object::Object;
 use crate::timer::Timer;
 use crate::{scheduler, schedule, scheduler::Scheduler};
@@ -65,10 +66,11 @@ pub struct Thread
 {
     pub(super) parent:Object,
     sp: *mut (),
-    entry:fn(*mut ()),
+    entry:fn(*mut ())-> Result<(),Error>,
     parameter: *mut (),
     stack_addr: *mut (),
     stack_size:u32,
+    error:Error,
     list:List<Self>,
     number_mask:u32,
     current_priority:u8,
@@ -82,7 +84,7 @@ pub struct Thread
 
 
 impl Thread {
-    fn new(entry: fn(*mut ()), parameter:*mut (), stack_start:*mut (), 
+    fn new(entry: fn(*mut ()) -> Result<(),Error>, parameter:*mut (), stack_start:*mut (), 
            stack_size:u32, priority:u8, tick:u8) -> Self {
         let thread = Self {
             parent:Object::new(),
@@ -91,6 +93,7 @@ impl Thread {
             stack_addr:stack_start,
             stack_size,
             sp:core::ptr::null_mut(),
+            error:Error::Ok,
             list:List::new(),
             init_priority:priority,
             current_priority:priority,
@@ -110,20 +113,25 @@ impl Thread {
         let thread = unsafe{&mut *(parameter as *mut Thread)};
         let libcpu = system!().libcpu();
         let level = libcpu.interrupt_disable();
+        thread.error = Error::TimeOut;
         thread.list.remove();
         libcpu.interrupt_enable(level);
         scheduler!(insert_thread(thread));
         schedule!();
     }
 
-    fn thread_exit()
+    fn thread_exit(err:Result<(),Error>)
     {
+        match err {
+            Err(error) => {println!("\x1b[31m Thread Error  {}\x1b[0m",error)},
+            Ok(()) => {}
+        }
         if let Some(thread) = thread_self!() {
             thread.stat = Status::Init as u8;
         }
         schedule!();
     }
-    pub fn init<'a>(thread: &'a mut Option<Self>, name:&'a str, entry: fn(*mut ()), parameter:*mut (),
+    pub fn init<'a>(thread: &'a mut Option<Self>, name:&'a str, entry: fn(*mut ()) -> Result<(),Error>, parameter:*mut (),
                 stack_start:*mut (), stack_size:u32, priority:u8, tick:u8) -> &'a mut Self{
         *thread = Some(Self::new(entry, parameter, stack_start, stack_size, priority, tick));
         let thread_mut = thread.as_mut().unwrap();
@@ -243,6 +251,6 @@ macro_rules! thread_self {
 #[macro_export]
 macro_rules! thread_sleep {
     ($tick:expr) => {{
-        $crate::scheduler!(current_thread()).unwrap().sleep($tick);
+        $crate::scheduler!(current_thread()).unwrap().sleep($tick)
     }};
 }

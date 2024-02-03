@@ -2,7 +2,7 @@ use crate::{*};
 use components::pin::{*};
 
 #[no_mangle]
-fn main() {
+fn main() -> Result<(),Error>{
     let timer_static = unsafe {&mut TEST_TIMER};
     
     let _timer = Timer::init(timer_static, timer_timeout, core::ptr::null_mut(), 0, 0);
@@ -19,9 +19,9 @@ fn main() {
     pin_mode(led_red,0);
     loop {
         pin_write(led_red, true);
-        kernel::thread_sleep!(500);
+        kernel::thread_sleep!(500)?;
         pin_write(led_red, false);
-        kernel::thread_sleep!(500);
+        kernel::thread_sleep!(500)?;
     }
 }
 
