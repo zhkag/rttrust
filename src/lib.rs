@@ -14,6 +14,7 @@ mod libcpu;
 mod irq;
 mod include;
 mod components;
+mod mem;
 
 pub use core::result::Result as Result;
 

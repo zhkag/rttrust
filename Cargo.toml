@@ -15,3 +15,4 @@ toml = "*"
 [package.metadata]
 NAME_MAX = 8
 THREAD_PRIORITY_MAX = 32
+ALIGN_SIZE = 8

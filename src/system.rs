@@ -10,6 +10,7 @@ use crate::irq::Interrupt;
 use crate::kservice;
 use crate::components;
 use crate::libcpu::LibcpuTrait;
+use crate::mem::SmallMem;
 
 static mut SYSTREM: Option<System> = None;
 fn main_fun(_parameter:*mut ()) -> Result<(),Error>{
@@ -29,6 +30,7 @@ pub struct System{
     pub(super) object_container:[ObjectInformation; ObjectInfoType::Unknown as usize],
     interrupt:Interrupt,
     pub libcpu: Option<*mut dyn LibcpuTrait>,
+    heap: Option<*mut SmallMem>,
 }
 
 impl System {
@@ -49,13 +51,14 @@ impl System {
             object_container:[ObjectInformation::new(); ObjectInfoType::Unknown as usize],
             interrupt:Interrupt::init(),
             libcpu:None,
+            heap:None,
         };
         systerm
     }
     fn main_app_init(&mut self) {
         let stack_size:u32 = core::mem::size_of::<[u8; MAIN_THREAD_STACK_SIZE]>().try_into().unwrap();
         let stack_start = unsafe {MAIN_THREAD_STACK.as_mut_ptr() as *mut ()};
-        let thread_static = unsafe {&mut MAIN_THREAD};
+        let thread_static = unsafe {&mut *core::ptr::addr_of_mut!(MAIN_THREAD)};
         let main_thread = Thread::init(thread_static,"main", main_fun, core::ptr::null_mut(),
                                                     stack_start, stack_size, 20, 32);
 
@@ -106,6 +109,12 @@ impl System {
         self.init();
         self.scheduler_mut().start();
         unreachable!();
+    }
+    pub fn set_heap(&mut self, heap:*mut SmallMem){
+        self.heap = Some(heap);
+    }
+    pub fn heap(&mut self) -> &mut SmallMem{
+        unsafe {&mut *self.heap.unwrap()}
     }
 }
 

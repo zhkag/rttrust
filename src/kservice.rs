@@ -39,3 +39,17 @@ macro_rules! println {
         }
     };
 }
+
+#[macro_export]
+macro_rules! align {
+    ($size:expr, $align:expr) => {
+        (($size) + ($align) - 1) & !($align - 1)
+    };
+}
+
+#[macro_export]
+macro_rules! align_down {
+    ($size:expr, $align:expr) => {
+        ($size) & !($align - 1)
+    };
+}
