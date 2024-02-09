@@ -34,4 +34,5 @@ fn main() {
     
     println!("cargo:rerun-if-env-changed=LINKER_SCRIPT");
     println!("cargo:rerun-if-changed=Cargo.toml");
+    println!("cargo:rerun-if-changed=bsp");
 }
