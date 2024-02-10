@@ -1,17 +1,18 @@
 use crate::system;
 use crate::schedule;
 use crate::thread::Status;
+use core::sync::atomic::{AtomicUsize, Ordering};
 
 pub struct Tick{
-    value:usize
+    value: AtomicUsize
 }
 
 impl Tick {
     pub fn new() -> Self {
-        Self { value: 0 }
+        Self { value: AtomicUsize::new(0)}
     }
     pub fn increase(&mut self) {
-        self.value += 1;
+        self.value.fetch_add(1, Ordering::SeqCst);
         let system = system!();
         let libcpu = system!().libcpu();
         let level = libcpu.interrupt_disable();
@@ -23,12 +24,12 @@ impl Tick {
             }
         }
         libcpu.interrupt_enable(level);
-        system.check(self.value);
+        system.check(self.value.load(Ordering::SeqCst));
     }
     pub fn get(&self) -> usize {
-        self.value
+        self.value.load(Ordering::SeqCst)
     }
     pub fn set(&mut self,tick:usize) {
-        self.value = tick;
+        self.value.store(tick, Ordering::SeqCst);
     }
 }
