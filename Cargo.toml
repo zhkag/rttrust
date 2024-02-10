@@ -6,7 +6,7 @@ readme = "README.md"
 authors = ["zhangkang <zhangkang@rt-thread.com>"]
 
 [dependencies]
-macros = { path = "macros", version = "=0.1.0" }
+macros = { path = "macros", version = "0.1.0" }
 
 [build-dependencies]
 chrono = "*"
