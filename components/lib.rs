@@ -1,6 +1,6 @@
 #![no_std]
 extern crate kernel;
-mod drivers;
+pub mod drivers;
 pub mod finsh;
 
 pub use drivers::core::device::DeviceOps;

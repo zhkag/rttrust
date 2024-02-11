@@ -1,4 +1,4 @@
-use crate::drivers::core::device::{Device, DeviceOps, DeviceClassType};
+use crate::drivers::core::device::{Device, DeviceRegister, DeviceOps, DeviceClassType};
 
 pub trait PinOps
 {
@@ -53,8 +53,10 @@ impl DevicePin {
         #[allow(deref_nullptr)]
         unsafe { &mut *((parent as usize - (&(&*(0 as *const DevicePin)).parent) as *const Device as usize) as *mut DevicePin) }
     }
+}
 
-    pub fn register(name:&str, ops:*mut dyn PinOps)
+impl<T: PinOps + 'static> DeviceRegister<T> for DevicePin {
+    fn register(name:&str, ops:*mut T)
     {
         let _hw_pin = unsafe {&mut _HW_PIN};
         *_hw_pin = Some(DevicePin::new());

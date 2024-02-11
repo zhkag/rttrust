@@ -101,3 +101,7 @@ impl Device {
         unsafe { &mut *((parent as usize - (&(&*(0 as *const Device)).parent) as *const Object as usize) as *mut Device) }
     }
 }
+
+pub trait DeviceRegister<T> {
+    fn register(name:&str, ops:*mut T);
+}

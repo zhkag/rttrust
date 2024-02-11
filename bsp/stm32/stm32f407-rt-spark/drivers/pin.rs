@@ -1,3 +1,4 @@
+use components::drivers::DeviceRegister;
 use components::pin::{PinOps,DevicePin};
 
 use kernel::println;
