@@ -1,7 +1,7 @@
 use crate::object::{ObjectInformation,ObjectClassType,ObjectInfoType};
 use crate::{println, Error};
 use crate::scheduler::Scheduler;
-use crate::hw::HardWare;
+use crate::hw::BoardTrait;
 use crate::thread::Thread;
 use crate::tick::Tick;
 use crate::list::List;
@@ -30,6 +30,7 @@ pub struct System{
     pub(super) object_container:[ObjectInformation; ObjectInfoType::Unknown as usize],
     interrupt:Interrupt,
     pub libcpu: Option<*mut dyn LibcpuTrait>,
+    pub board: Option<*mut dyn BoardTrait>,
     heap: Option<*mut SmallMem>,
 }
 
@@ -51,6 +52,7 @@ impl System {
             object_container:[ObjectInformation::new(); ObjectInfoType::Unknown as usize],
             interrupt:Interrupt::init(),
             libcpu:None,
+            board:None,
             heap:None,
         };
         systerm
@@ -67,7 +69,7 @@ impl System {
     }
     fn init(&mut self)  {
         self.object_container_init();
-        HardWare::board_init();
+        self.board().init();
         components::board_init();
         kservice::show_version();
         self.timer_init();

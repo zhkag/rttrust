@@ -8,7 +8,7 @@ const AHB1PERIPH_BASE: u32 = PERIPH_BASE + 0x00020000;
 const GPIOA_BASE: u32 = AHB1PERIPH_BASE;
 
 #[repr(C)]
-struct GPIOTypeDef
+pub struct GPIOTypeDef
 {
     moder:u32,
     otyper:u32,
@@ -21,9 +21,58 @@ struct GPIOTypeDef
     afr:[u32;2],
 }
 
-struct StmPin
-{
+impl GPIOTypeDef{
+    pub fn init(gpio: u32) -> &'static mut Self{
+        unsafe {&mut *(gpio as *mut GPIOTypeDef)}
+    }
+    pub fn set(&mut self, pinx:u16, mode:u32, otype:u32, ospeed:u32, pupd:u32) {
+        let mut pos:u32;
+        let mut curpin:u32;
+        for pinpos in 0..16 {
+            pos = 1 << pinpos;
+            curpin = (pinx as u32) & pos;
+            if curpin == pos {
+                self.moder &= !(3 << (pinpos * 2));
+                self.moder |= mode << (pinpos * 2);
+                if (mode == 1) || (mode == 2) {
+                    self.ospeedr &= !(3 << (pinpos * 2));
+                    self.ospeedr |= ospeed << (pinpos * 2);
+                    self.otyper &= !(1 << pinpos);
+                    self.otyper |= otype << pinpos;
+                }
+                self.pupdr &= !(3 << (pinpos * 2));
+                self.pupdr |= pupd << (pinpos * 2);
+            }
+        }
+    }
+    
+    pub fn pin_set(&mut self, pinx:u32, status:bool)
+    {
+        if status {
+            self.bsrr |= pinx;
+        }
+        else {
+            self.bsrr |= pinx << 16;
+        }
+    }
+    
+    pub fn af_set(&mut self, pinx:u32, afx:u32)
+    {
+        let mut pos:u32;
+        let mut curpin: u32;
+        for pinpos in 0..16 {
+            pos = 1 << pinpos;      /* 一个个位检查 */
+            curpin = pinx & pos;    /* 检查引脚是否要设置 */
+    
+            if curpin == pos{
+                self.afr[pinpos >> 3] &= !(0x0F << ((pinpos & 0x07) * 4));
+                self.afr[pinpos >> 3] |= afx << ((pinpos & 0x07) * 4);
+            }
+        }
+    }
 }
+
+struct StmPin;
 
 impl StmPin{
     #[inline]
@@ -49,27 +98,6 @@ impl StmPin{
 
 }
 
-fn sys_gpio_set(p_gpiox: &mut GPIOTypeDef, pinx:u16, mode:u32, otype:u32, ospeed:u32, pupd:u32) {
-    let mut pos:u32;
-    let mut curpin:u32;
-    for pinpos in 0..16 {
-        pos = 1 << pinpos;
-        curpin = (pinx as u32) & pos;
-        if curpin == pos {
-            p_gpiox.moder &= !(3 << (pinpos * 2));
-            p_gpiox.moder |= mode << (pinpos * 2);
-            if (mode == 1) || (mode == 2) {
-                p_gpiox.ospeedr &= !(3 << (pinpos * 2));
-                p_gpiox.ospeedr |= ospeed << (pinpos * 2);
-                p_gpiox.otyper &= !(1 << pinpos);
-                p_gpiox.otyper |= otype << pinpos;
-            }
-            p_gpiox.pupdr &= !(3 << (pinpos * 2));
-            p_gpiox.pupdr |= pupd << (pinpos * 2);
-        }
-    }
-}
-
 impl PinOps for StmPin {
     fn pin_mode(&mut self,  pin: usize, _mode: u8){
         let gpio_port = Self::st_port(pin);
@@ -86,17 +114,12 @@ impl PinOps for StmPin {
             4 => {mode = 1; otype = 1; pupd = 0;},
             _ => {},
         }
-        sys_gpio_set(gpio_port, gpio_pin as u16, mode, otype, ospeed, pupd);
+        gpio_port.set(gpio_pin as u16, mode, otype, ospeed, pupd);
     }
     fn pin_write(&mut self,  pin: usize, value: bool){
         let gpio_port = Self::st_port(pin);
         let gpio_pin = Self::st_pin(pin) as u32;
-        if value {
-            gpio_port.bsrr |= gpio_pin;
-        }
-        else {
-            gpio_port.bsrr |= gpio_pin << 16;
-        }
+        gpio_port.pin_set(gpio_pin, value);
     }
     fn pin_read(&mut self,  pin: usize) -> bool{
         let gpio_port = Self::st_port(pin);
