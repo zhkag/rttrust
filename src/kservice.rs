@@ -1,13 +1,15 @@
 use crate::println;
 use crate::include;
+use crate::system;
 
 pub struct UsartWriter {
 }
 
 impl core::fmt::Write for UsartWriter {
-    fn write_str(&mut self, s: &str) -> core::fmt::Result {
+    fn write_str(&mut self, s: &str) -> core::fmt::Result {        
+        let system = system!();
         for c in s.chars() {
-            crate::hw::putc(c);
+            system.bsp().putc(c);
         }
         Ok(())
     }

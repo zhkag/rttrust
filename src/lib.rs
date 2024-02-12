@@ -19,7 +19,7 @@ mod mem;
 pub use core::result::Result as Result;
 
 pub use libcpu::{LibcpuTrait, sys_tick};
-pub use hw::BoardTrait;
+pub use hw::BspTrait;
 use core::panic::PanicInfo;
 
 pub extern crate macros;

@@ -56,7 +56,7 @@ impl DevicePin {
 }
 
 impl<T: PinOps + 'static> DeviceRegister<T> for DevicePin {
-    fn register(name:&str, ops:*mut T)
+    fn register(&mut self, name:&str, ops:*mut T)
     {
         let _hw_pin = unsafe {&mut _HW_PIN};
         *_hw_pin = Some(DevicePin::new());

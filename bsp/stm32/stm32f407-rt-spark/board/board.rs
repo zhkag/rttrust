@@ -262,22 +262,26 @@ impl RccTypeDef{
 }
 
 
-use kernel::BoardTrait;
-use crate::drivers::uart::UsartTypeDef;
+use kernel::BspTrait;
+use crate::drivers::uart::hw_usart_init;
 struct Board;
 
-impl BoardTrait for Board {
+use crate::drivers::uart::UsartTypeDef;
+
+impl BspTrait for Board {
     fn init(&self){
         RccTypeDef::init().clock_init();
         SysTickType::init().systick_init();
-        UsartTypeDef::init().usart_init();
+        hw_usart_init();
     }
-
+    fn putc(&self,  c: char) {
+        UsartTypeDef::init().putc(c);
+    }
 }
 
 #[kernel::macros::init_export("0.0")]
 fn board_init() {
     let mut board = Board{};
     let system = kernel::system!();
-    system.board_trait_init(&mut board);
+    system.bsp_trait_init(&mut board);
 }

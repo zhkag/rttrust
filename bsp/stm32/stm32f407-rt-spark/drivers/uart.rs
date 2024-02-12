@@ -1,3 +1,39 @@
+use components::uart::{UartOps, DeviceUart, SerialConfigure};
+
+struct StmUart{
+    uart: DeviceUart,
+}
+
+
+impl UartOps for StmUart {
+    fn configure(&mut self,  _cfg: &mut SerialConfigure){
+
+    }
+    fn control(&mut self,  _cmd: usize, _args: Option<*mut ()>){
+
+    }
+    fn putc(&mut self,  c: char){
+        UsartTypeDef::init().putc(c);
+    }
+    fn getc(&mut self) -> u8{
+        0
+    }
+    
+}
+
+use components::drivers::DeviceRegister;
+
+static mut _HW_UART1: Option<StmUart> = None;
+
+pub fn hw_usart_init(){
+    let mut stm_uart = StmUart{uart: DeviceUart::new()};
+    let _hw_uart1 = unsafe {&mut _HW_UART1};
+    *_hw_uart1 = Some(StmUart{uart: DeviceUart::new()});
+    let _hw_uart1_mut = _hw_uart1.as_mut().unwrap();
+    UsartTypeDef::init().usart_init();
+    _hw_uart1_mut.uart.register("uart1",&mut stm_uart);
+}
+
 use crate::board::board::{RccTypeDef, NvicType, USART1_BASE, GPIOA_BASE};
 use crate::drivers::pin::GPIOTypeDef;
 

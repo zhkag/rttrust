@@ -103,5 +103,5 @@ impl Device {
 }
 
 pub trait DeviceRegister<T> {
-    fn register(name:&str, ops:*mut T);
+    fn register(&mut self, name:&str, ops:*mut T);
 }

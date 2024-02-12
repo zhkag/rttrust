@@ -171,6 +171,6 @@ fn device_pin() {
         *ahb1enr |= 1 << 5;
     }
     let mut stm_pin = StmPin{};
-    DevicePin::register("pin",&mut stm_pin);
+    DevicePin::new().register("pin",&mut stm_pin);
 }
 
