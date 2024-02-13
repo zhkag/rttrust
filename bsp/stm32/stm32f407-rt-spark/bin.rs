@@ -26,6 +26,7 @@ fn test(_parameter:*mut ()) -> Result<(),Error>{
     let mut mode = DevicePinMode::init(led_yellow, 0);
     let mut value = DevicePinValue::init(led_yellow, true);
     pin.control(0, mode.r#mut());
+    loop{}
     loop {
         value.set_value(true);
         pin.write(0,value.r#const() ,core::mem::size_of::<DevicePinValue>());

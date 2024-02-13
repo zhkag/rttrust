@@ -15,6 +15,7 @@ fn main() -> Result<(),Error>{
                                                 stack_start, stack_size, 20, 4);
     test_thread.startup();
 
+    loop {}
     let led_red = pin_get("PF.12");
     pin_mode(led_red,0);
     loop {

@@ -64,7 +64,6 @@ impl System {
         let main_thread = Thread::init(thread_static,"main", main_fun, core::ptr::null_mut(),
                                                     stack_start, stack_size, 20, 32);
 
-        println!("{}",main_thread.parent);
         main_thread.startup();
     }
     fn init(&mut self)  {

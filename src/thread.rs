@@ -3,7 +3,7 @@ use crate::object::Object;
 use crate::timer::Timer;
 use crate::{scheduler, schedule, scheduler::Scheduler};
 use crate::list::List;
-use crate::{thread_self, Error};
+use crate::{thread_self_mut, thread_self, Error};
 use crate::system;
 
 // use core::ops::{BitAnd,BitOr,Not};
@@ -116,7 +116,7 @@ impl Thread {
         thread.error = Error::TimeOut;
         thread.list.remove();
         libcpu.interrupt_enable(level);
-        scheduler!(insert_thread(thread));
+        scheduler!(insert_thread(*thread));
         schedule!();
     }
 
@@ -126,7 +126,7 @@ impl Thread {
             Err(error) => {println!("\x1b[31m Thread Error  {}\x1b[0m",error)},
             Ok(()) => {}
         }
-        if let Some(thread) = thread_self!() {
+        if let Some(thread) = thread_self_mut!() {
             thread.stat = Status::Init as u8;
         }
         schedule!();
@@ -157,7 +157,7 @@ impl Thread {
             libcpu.interrupt_enable(level);
             return Err(Error::Error);
         }
-        scheduler!(remove_thread(self));
+        // scheduler!(remove_thread(self));
         let stat = match suspend_flag {
             SuspendWithFlag::INTERRUPTIBLE => Status::SUSPEND_INTERRUPTIBLE as u8,
             _ => unreachable!(),
@@ -202,7 +202,7 @@ impl Thread {
         if (self.stat & Status::SuspendMask as u8) != Status::SuspendMask as u8{
             return;
         }
-        scheduler!(insert_thread(self));
+        scheduler!(insert_thread(*self));
     }
 
     pub fn startup(&mut self){
@@ -239,6 +239,13 @@ impl Scheduler {
         #[allow(deref_nullptr)]
         unsafe { &mut *((list as usize - (&(&*(0 as *const Thread)).list) as *const List<Thread> as usize) as *mut Thread) }
     }
+}
+
+#[macro_export]
+macro_rules! thread_self_mut {
+    () => {{
+        $crate::scheduler!(current_thread_mut())
+    }};
 }
 
 #[macro_export]

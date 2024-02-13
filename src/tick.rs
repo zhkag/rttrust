@@ -16,7 +16,8 @@ impl Tick {
         let system = system!();
         let libcpu = system!().libcpu();
         let level = libcpu.interrupt_disable();
-        if let Some(thread) = system.scheduler_mut().current_thread() {
+        let scheduler = system.scheduler_mut();
+        if let Some(thread) = scheduler.current_thread_mut() {
             if thread.tick_decrease() == 0 {
                 thread.set_stat(thread.stat() | Status::StatYield as u8);
                 libcpu.interrupt_enable(level);

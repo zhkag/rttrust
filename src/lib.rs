@@ -15,6 +15,7 @@ mod irq;
 mod include;
 mod components;
 mod mem;
+mod heaplist;
 
 pub use core::result::Result as Result;
 
