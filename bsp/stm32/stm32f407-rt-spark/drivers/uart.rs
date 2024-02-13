@@ -16,6 +16,9 @@ impl UartOps for StmUart {
         UsartTypeDef::init().putc(c);
     }
     fn getc(&mut self) -> u8{
+        if let Some(c) =  UsartTypeDef::init().getc(){
+            return c as u8;
+        }
         0
     }
     
@@ -57,6 +60,12 @@ impl UsartTypeDef{
     {
         self.dr = ch as u32;
         while (self.sr & 0x40) == 0{}     /* 等待字符发送完成 */
+    }
+    pub fn getc(&mut self) -> Option<char>{
+        if self.sr & (1 << 5) != 0 {
+            return char::from_u32(self.dr)
+        }
+        None
     }
     pub fn usart_init(&mut self){
         let rcc = RccTypeDef::init();
