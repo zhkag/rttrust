@@ -4,7 +4,7 @@ pub mod object;
 pub mod system;
 pub mod scheduler;
 pub mod idle;
-pub mod hw;
+pub mod bsp;
 pub mod thread;
 pub mod list;
 pub mod tick;
@@ -19,7 +19,7 @@ mod mem;
 pub use core::result::Result as Result;
 
 pub use libcpu::{LibcpuTrait, sys_tick};
-pub use hw::BspTrait;
+pub use bsp::BspTrait;
 use core::panic::PanicInfo;
 
 pub extern crate macros;

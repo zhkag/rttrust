@@ -1,7 +1,7 @@
 use crate::object::{ObjectInformation,ObjectClassType,ObjectInfoType};
 use crate::{println, Error};
 use crate::scheduler::Scheduler;
-use crate::hw::BspTrait;
+use crate::bsp::BspTrait;
 use crate::thread::Thread;
 use crate::tick::Tick;
 use crate::list::List;
