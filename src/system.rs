@@ -11,6 +11,7 @@ use crate::components;
 use crate::libcpu::LibcpuTrait;
 use crate::mem::SmallMem;
 use crate::heaplist;
+use crate::Box;
 
 static mut SYSTREM: Option<System> = None;
 fn main_fun(_parameter:*mut ()) -> Result<(),Error>{
@@ -30,7 +31,7 @@ pub struct System{
     pub(super) object_container:[ObjectInformation; ObjectInfoType::Unknown as usize],
     interrupt:Interrupt,
     pub libcpu: Option<*mut dyn LibcpuTrait>,
-    pub bsp: Option<*mut dyn BspTrait>,
+    pub bsp: Option<Box<dyn BspTrait>>,
     heap: Option<*mut SmallMem>,
 }
 

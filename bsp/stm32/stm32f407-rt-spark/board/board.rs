@@ -264,26 +264,31 @@ impl RccTypeDef{
 
 use kernel::BspTrait;
 use crate::drivers::uart::hw_usart_init;
-struct Board;
+struct Board<'a> {
+    console_device: Option<&'a mut DeviceUart>,
+}
 
 use components::uart::DeviceUart;
 
-impl BspTrait for Board {
+impl BspTrait for Board<'_> {
     fn init(&self){
         RccTypeDef::init().clock_init();
         SysTickType::init().systick_init();
         hw_usart_init();
     }
-    fn putc(&self,  c: char) {
-        if let Some(pin) = DeviceUart::find("uart1"){
+    fn putc(&mut self,  c: char) {
+        if let Some(pin) = self.console_device.as_mut(){
             pin.ops().putc(c);
+        }
+        else{
+            self.console_device = DeviceUart::find("uart1");
         }
     }
 }
 
-#[kernel::macros::init_export("0.0")]
+#[kernel::macros::init_export("0.1")]
 fn board_init() {
-    let mut board = Board{};
+    let board = Board{console_device:None};
     let system = kernel::system!();
-    system.bsp_trait_init(&mut board);
+    system.bsp_trait_init(board);
 }
