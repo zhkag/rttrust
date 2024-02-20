@@ -1,6 +1,6 @@
 use crate::drivers::core::device::{Device, DeviceOps, DeviceClassType};
 use crate::drivers::DeviceRegister;
-
+use kernel::Box;
 #[repr(C)]
 pub struct SerialConfigure {
     pub baud_rate: u32,
@@ -30,7 +30,7 @@ pub struct DeviceUart
 {
     parent:Device,
     // config:SerialConfigure,
-    pub ops: Option<*mut dyn UartOps>,
+    pub ops: Option<Box<dyn UartOps>>,
 }
 
 impl DeviceUart {
@@ -40,8 +40,8 @@ impl DeviceUart {
             ops: None,
         }
     }
-    pub fn ops(&self) -> &mut dyn UartOps{
-        unsafe { &mut *(self.ops.unwrap())}
+    pub fn ops(&mut self) -> &mut Box<dyn UartOps>{
+        self.ops.as_mut().unwrap()
     }
     pub fn find(name:&str)->Option<&mut DeviceUart>{
         if let Some(device) = Device::find(name){
@@ -57,9 +57,9 @@ impl DeviceUart {
 }
 
 impl<T: UartOps + 'static> DeviceRegister<T> for DeviceUart {
-    fn register(&mut self, name:&str, ops:*mut T)
+    fn register(&mut self, name:&str, ops:T)
     {
-        self.ops = Some(ops);
+        self.ops = Some(Box::new(ops));
         self.parent.init(DeviceClassType::Char);
         self.parent.register(name);
     }

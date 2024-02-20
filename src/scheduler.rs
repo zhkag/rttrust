@@ -5,8 +5,6 @@ use crate::scheduler;
 use crate::interrupt_nest;
 use crate::include::{*};
 
-
-extern crate alloc;
 pub struct Scheduler{
     ready_priority_group:usize,
     last_thread:Option<Thread>,

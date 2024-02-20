@@ -266,7 +266,7 @@ use kernel::BspTrait;
 use crate::drivers::uart::hw_usart_init;
 struct Board;
 
-use crate::drivers::uart::UsartTypeDef;
+use components::uart::DeviceUart;
 
 impl BspTrait for Board {
     fn init(&self){
@@ -275,7 +275,9 @@ impl BspTrait for Board {
         hw_usart_init();
     }
     fn putc(&self,  c: char) {
-        UsartTypeDef::init().putc(c);
+        if let Some(pin) = DeviceUart::find("uart1"){
+            pin.ops().putc(c);
+        }
     }
 }
 

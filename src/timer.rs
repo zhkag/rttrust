@@ -62,8 +62,7 @@ impl System {
     }
 }
 
-extern crate alloc;
-use alloc::boxed::Box;
+use crate::alloc::boxed::Box;
 
 impl Scheduler {
     pub fn thread_timer_check(&mut self, tick:usize){

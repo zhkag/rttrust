@@ -1,5 +1,4 @@
-extern crate alloc;
-use alloc::rc::Rc;
+use crate::alloc::rc::Rc;
 use core::cell::RefCell;
 
 struct Node<T> {

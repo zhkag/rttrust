@@ -16,6 +16,8 @@ mod include;
 mod components;
 mod mem;
 mod heaplist;
+pub extern crate alloc;
+pub use alloc::boxed::Box;
 
 pub use core::result::Result as Result;
 
