@@ -1,5 +1,5 @@
 use crate::object::{ObjectInformation,ObjectClassType,ObjectInfoType};
-use crate::{println, Error};
+use crate::Error;
 use crate::scheduler::Scheduler;
 use crate::bsp::BspTrait;
 use crate::thread::Thread;

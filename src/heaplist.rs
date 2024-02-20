@@ -1,4 +1,3 @@
-use crate::println;
 extern crate alloc;
 use alloc::rc::Rc;
 use core::cell::RefCell;
@@ -24,6 +23,7 @@ pub struct List<T> {
     tail: Option<Rc<RefCell<Node<T>>>>,
 }
 
+#[allow(dead_code)]
 impl<T> List<T> {
     pub fn new() -> Self {
         List { head: None, tail: None }
