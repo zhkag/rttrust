@@ -12,6 +12,7 @@ pub struct Scheduler{
     last_thread:Option<Thread>,
     current_thread:Option<Thread>,
     priority_table_heap:[Option<heaplist::List<Thread>>;THREAD_PRIORITY_MAX],
+    thread_timer_list:heaplist::List<Thread>,
 }
 
 impl Scheduler {
@@ -22,6 +23,7 @@ impl Scheduler {
             last_thread:None,
             current_thread:None,
             priority_table_heap:[ARRAY_REPEAT_VALUE;THREAD_PRIORITY_MAX],
+            thread_timer_list:heaplist::List::new(),
         };
         scheduler
     }
@@ -31,17 +33,30 @@ impl Scheduler {
         }
     }
 
-    pub fn schedule(&mut self){
+    pub fn thread_timer_list_mut(&mut self) ->&mut heaplist::List<Thread>{
+        &mut self.thread_timer_list
+    }
+
+    pub fn solve_last_thread(&mut self){
         if let Some(thread) = self.last_thread {
             self.last_thread = None;
-            self.insert_thread(thread);
+            if thread.timer_run(){
+                self.thread_timer_list.insert_with_cmp(thread, |a, b| 
+                    a.timeout_tick() < b.timeout_tick());
+            }
+            else {
+                self.insert_thread(thread);
+            }
         }
+    }
+
+    pub fn schedule(&mut self){
+        self.solve_last_thread();
         if self.ready_priority_group == 0 {
             return;
         }
         let libcpu = system!().libcpu();
         let level = libcpu.interrupt_disable();
-        let mut need_insert_from_thread = false;
         let mut highest_ready_priority = 0;
         
         let binding = self.get_highest_priority_thread(&mut highest_ready_priority);
@@ -57,9 +72,6 @@ impl Scheduler {
             else if prev_thread.current_priority() == highest_ready_priority && (prev_thread.stat() & Status::STAT_YIELD_MASK as u8) == 0 {
                 to_thread = prev_thread;
             }
-            else {
-                need_insert_from_thread = true;
-            }
         }
         
         if to_thread != thread_self!().unwrap()
@@ -68,9 +80,7 @@ impl Scheduler {
                 prev_thread.set_stat(prev_thread.stat() & !(Status::STAT_YIELD_MASK as u8));
             }
             scheduler!(set_current_thread(next_thread));
-            if need_insert_from_thread {
-                self.set_last_thread(prev_thread);
-            }
+            self.set_last_thread(prev_thread);
             let to_thread_mut =  thread_self_mut!().unwrap();
             to_thread_mut.set_stat(Status::Running as u8 | (to_thread_mut.stat() & !(Status::StatMask as u8)));
             
@@ -97,6 +107,7 @@ impl Scheduler {
 
     
     pub fn insert_thread(&mut self,mut thread: Thread){
+        self.solve_last_thread();
         let libcpu = system!().libcpu();
         let level = libcpu.interrupt_disable();
         if let Some(current_thread) = self.current_thread() {
@@ -118,7 +129,7 @@ impl Scheduler {
         self.ready_priority_group |= thread.number_mask() as usize;
         libcpu.interrupt_enable(level);
     }
-    
+
     pub fn last_thread_mut(&mut self) -> Option<&mut Thread> {
         self.last_thread.as_mut()
     }
@@ -139,7 +150,12 @@ impl Scheduler {
     fn get_highest_priority_thread(&mut self,highest_prio: &mut u8) -> Option<Thread> {
         let highest_ready_priority:u8 = self.ready_priority_group.trailing_zeros() as u8;
         *highest_prio = highest_ready_priority;
-        self.priority_table_heap[highest_ready_priority as usize].as_mut().unwrap().pop_front()
+        let list = self.priority_table_heap[highest_ready_priority as usize].as_mut().unwrap();
+        let thread = list.pop_front();
+        if list.is_empty() {
+            self.ready_priority_group &= !(thread.as_ref().unwrap().number_mask() as usize);
+        }
+        thread
     }
 
     pub fn start(&mut self) {

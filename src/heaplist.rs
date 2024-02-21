@@ -59,6 +59,32 @@ impl<T> List<T> {
         }
     }
 
+    pub fn insert_with_cmp<F>(&mut self, value: T, mut compare: F)
+    where
+        F: FnMut(&T, &T) -> bool,
+    {
+        let mut current = self.head.clone();
+        while let Some(node) = current {
+            if compare(&value, &node.borrow().value) {
+                let new_node = Node::new(value);
+                let prev = node.borrow_mut().prev.take();
+                if let Some(prev_node) = prev {
+                    prev_node.borrow_mut().next = Some(new_node.clone());
+                    new_node.borrow_mut().prev = Some(prev_node);
+                } else {
+                    // 如果没有前驱节点，说明当前节点是头部节点
+                    self.head = Some(new_node.clone());
+                }
+                new_node.borrow_mut().next = Some(node.clone());
+                node.borrow_mut().prev = Some(new_node);
+                return;
+            }
+            current = node.borrow().next.clone();
+        }
+        // 如果遍历完链表仍未找到合适位置，则将节点插入到链表尾部
+        self.push_back(value);
+    }
+
     pub fn pop_front(&mut self) -> Option<T> {
         self.head.take().map(|old_head| {
             if let Some(new_head) = old_head.borrow_mut().next.take() {

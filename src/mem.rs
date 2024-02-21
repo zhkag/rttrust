@@ -146,7 +146,7 @@ impl SmallMem {
         uintptr_size -= 1;
         let align = (align + uintptr_size) & !uintptr_size;
         let align_size = ((size + uintptr_size) & !uintptr_size) + align;
-        let mut ret_ptr:usize = 0;
+        let ret_ptr:usize;
         if let Some(ptr) = self.malloc(align_size){
             let align_ptr:usize;
             if (ptr & (align - 1)) == 0
@@ -161,6 +161,9 @@ impl SmallMem {
                 *((align_ptr - core::mem::size_of::<usize>()) as *mut usize) = ptr;
             }
             ret_ptr = align_ptr;
+        }
+        else {
+            unreachable!();
         }
         return ret_ptr as *mut u8;
     }

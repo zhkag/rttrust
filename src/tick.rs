@@ -17,6 +17,7 @@ impl Tick {
         let libcpu = system!().libcpu();
         let level = libcpu.interrupt_disable();
         let scheduler = system.scheduler_mut();
+        scheduler.solve_last_thread();
         if let Some(thread) = scheduler.current_thread_mut() {
             if thread.tick_decrease() == 0 {
                 thread.set_stat(thread.stat() | Status::StatYield as u8);
@@ -25,7 +26,7 @@ impl Tick {
             }
         }
         libcpu.interrupt_enable(level);
-        system.check(self.value.load(Ordering::SeqCst));
+        system.timer_check(self.value.load(Ordering::SeqCst));
     }
     pub fn get(&self) -> usize {
         self.value.load(Ordering::SeqCst)

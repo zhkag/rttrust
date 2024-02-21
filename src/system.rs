@@ -4,13 +4,13 @@ use crate::scheduler::Scheduler;
 use crate::bsp::BspTrait;
 use crate::thread::Thread;
 use crate::tick::Tick;
-use crate::list::List;
 use crate::timer::Timer;
 use crate::irq::Interrupt;
 use crate::kservice;
 use crate::components;
 use crate::libcpu::LibcpuTrait;
 use crate::mem::SmallMem;
+use crate::heaplist;
 
 static mut SYSTREM: Option<System> = None;
 fn main_fun(_parameter:*mut ()) -> Result<(),Error>{
@@ -26,7 +26,7 @@ static mut MAIN_THREAD: Option<Thread> = None;
 pub struct System{
     scheduler:Option<Scheduler>,
     tick:Tick,
-    timer_list:List<Timer>,
+    timer_list:heaplist::List<Timer>,
     pub(super) object_container:[ObjectInformation; ObjectInfoType::Unknown as usize],
     interrupt:Interrupt,
     pub libcpu: Option<*mut dyn LibcpuTrait>,
@@ -48,7 +48,7 @@ impl System {
         let systerm = Self{
             scheduler:None,
             tick:Tick::new(),
-            timer_list:List::new(),
+            timer_list:heaplist::List::new(),
             object_container:[ObjectInformation::new(); ObjectInfoType::Unknown as usize],
             interrupt:Interrupt::init(),
             libcpu:None,
@@ -71,7 +71,6 @@ impl System {
         self.bsp().init();
         components::board_init();
         kservice::show_version();
-        self.timer_init();
         self.scheduler_init();
         self.main_app_init();
         crate::idle::rt_thread_idle_init();
@@ -80,10 +79,6 @@ impl System {
     fn object_container_init(&mut self) {
         self.object_container[ObjectInfoType::Thread as usize].init(ObjectClassType::Thread,core::mem::size_of::<Thread>().try_into().unwrap());
         self.object_container[ObjectInfoType::Device as usize].init(ObjectClassType::Device,core::mem::size_of::<Thread>().try_into().unwrap());
-    }
-
-    fn timer_init(&mut self) {
-        self.timer_list.init();
     }
 
     fn scheduler_init(&mut self) {
@@ -102,7 +97,7 @@ impl System {
         &mut self.tick
     }
 
-    pub fn timer_list_mut(&mut self) ->&mut List<Timer>{
+    pub fn timer_list_mut(&mut self) ->&mut heaplist::List<Timer>{
         &mut self.timer_list
     }
 
