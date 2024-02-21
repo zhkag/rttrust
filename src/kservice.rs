@@ -8,8 +8,10 @@ pub struct UsartWriter {
 impl core::fmt::Write for UsartWriter {
     fn write_str(&mut self, s: &str) -> core::fmt::Result {        
         let system = system!();
-        for c in s.chars() {
-            system.bsp().putc(c);
+        if let Some(bsp) = system.bsp() {
+            for c in s.chars() {
+                bsp.putc(c);
+            }
         }
         Ok(())
     }

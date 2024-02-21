@@ -69,7 +69,7 @@ impl System {
     }
     fn init(&mut self)  {
         self.object_container_init();
-        self.bsp().init();
+        self.bsp().unwrap().init();
         components::board_init();
         kservice::show_version();
         self.scheduler_init();
