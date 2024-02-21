@@ -62,14 +62,12 @@ impl System {
     }
 }
 
-use crate::alloc::boxed::Box;
-
 impl Scheduler {
     pub fn thread_timer_check(&mut self, tick:usize){
         let list = self.thread_timer_list_mut();
         if let Some(mut thread) = list.pop_front() {
             if tick > thread.thread_timer_mut().timeout_tick{
-                let timer_parameter = Box::into_raw(Box::new(thread)) as *mut ();
+                let timer_parameter = &mut thread as *mut crate::thread::Thread as *mut ();
                 (thread.thread_timer_mut().timeout_func)(timer_parameter);
             }else {
                 list.push_front(thread);
