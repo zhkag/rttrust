@@ -2,7 +2,6 @@ use crate::println;
 use crate::object::Object;
 use crate::timer::Timer;
 use crate::{scheduler, schedule};
-use crate::list::List;
 use crate::{thread_self_mut, thread_self, Error};
 use crate::system;
 
@@ -70,7 +69,6 @@ pub struct Thread
     stack_addr: *mut (),
     stack_size:u32,
     error:Error,
-    list:List<Self>,
     number_mask:u32,
     current_priority:u8,
     init_priority:u8,
@@ -94,7 +92,6 @@ impl Thread {
             stack_size,
             sp:core::ptr::null_mut(),
             error:Error::Ok,
-            list:List::new(),
             init_priority:priority,
             current_priority:priority,
             number_mask: 1 << priority,
@@ -127,7 +124,6 @@ impl Thread {
         let libcpu = system!().libcpu();
         let level = libcpu.interrupt_disable();
         thread.error = Error::TimeOut;
-        thread.list.remove();
         libcpu.interrupt_enable(level);
         thread.timer_run = false;
         scheduler!(insert_thread(*thread));
@@ -158,8 +154,6 @@ impl Thread {
 
         let timer_parameter = thread_mut.as_mut_ptr() as *mut ();
         Timer::init(&mut thread_mut.thread_timer, Self::thread_timeout, timer_parameter, 0, 0);
-        
-        thread_mut.list_mut().init();
         thread_mut
     }
 
@@ -242,10 +236,6 @@ impl Thread {
             return 0;
         }
         self.remaining_tick
-    }
-
-    pub fn list_mut(&mut self) -> &mut List<Self> {
-        &mut self.list
     }
 }
 
