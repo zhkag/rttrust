@@ -32,7 +32,7 @@ pub struct System{
     interrupt:Interrupt,
     pub libcpu: Option<Box<dyn LibcpuTrait>>,
     pub bsp: Option<Box<dyn BspTrait>>,
-    heap: Option<*mut SmallMem>,
+    heap: Option<&'static mut SmallMem>,
 }
 
 impl System {
@@ -107,11 +107,11 @@ impl System {
         self.scheduler_mut().start();
         unreachable!();
     }
-    pub fn set_heap(&mut self, heap:*mut SmallMem){
+    pub fn set_heap(&mut self, heap:&'static mut SmallMem){
         self.heap = Some(heap);
     }
-    pub fn heap(&mut self) -> &mut SmallMem{
-        unsafe {&mut *self.heap.unwrap()}
+    pub fn heap(&'static mut self) -> &'static mut SmallMem{
+        self.heap.as_mut().unwrap()
     }
 }
 
