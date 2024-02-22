@@ -30,7 +30,7 @@ pub struct System{
     timer_list:heaplist::List<Timer>,
     pub(super) object_container:[ObjectInformation; ObjectInfoType::Unknown as usize],
     interrupt:Interrupt,
-    pub libcpu: Option<*mut dyn LibcpuTrait>,
+    pub libcpu: Option<Box<dyn LibcpuTrait>>,
     pub bsp: Option<Box<dyn BspTrait>>,
     heap: Option<*mut SmallMem>,
 }

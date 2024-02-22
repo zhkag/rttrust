@@ -4,6 +4,7 @@ use crate::thread::Thread;
 use crate::interrupt_leave;
 use crate::interrupt_enter;
 use crate::Error;
+use crate::Box;
 
 pub fn sys_tick() {
     interrupt_enter!();
@@ -21,10 +22,10 @@ pub trait LibcpuTrait {
 }
 
 impl System {
-    pub fn libcpu(&self) -> &dyn LibcpuTrait{
-        unsafe { &*(self.libcpu.unwrap())}
+    pub fn libcpu(&mut self) -> &mut Box<dyn LibcpuTrait>{
+        self.libcpu.as_mut().unwrap()
     }
-    pub fn libcpu_trait_init(&mut self,item: *mut dyn LibcpuTrait) {
-        self.libcpu = Some(item);
+    pub fn libcpu_trait_init(&mut self,item: impl LibcpuTrait + 'static) {
+        self.libcpu = Some(Box::new(item));
     }
 }

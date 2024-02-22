@@ -186,7 +186,7 @@ impl LibcpuTrait for Libcpu {
 
 #[kernel::macros::init_export("0.1")]
 fn libcpu_init() {
-    let mut libcpu = Libcpu{};
+    let libcpu = Libcpu{};
     let system = kernel::system!();
-    system.libcpu_trait_init(&mut libcpu);
+    system.libcpu_trait_init(libcpu);
 }
