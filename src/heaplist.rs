@@ -84,6 +84,27 @@ impl<T> List<T> {
         self.push_back(value);
     }
 
+    pub fn pop_with_cmp<V,C,F>(&mut self, value: &V, mut compare: C,mut f: F)
+    where
+        C: FnMut(&V, &mut T) -> bool,
+        F: FnMut(T),
+    {
+        while let Some(old_head) = self.head.take() {
+            if compare(&value, &mut (&mut *old_head.borrow_mut()).value) {
+                if let Some(new_head) = old_head.borrow_mut().next.take() {
+                    new_head.borrow_mut().prev = None;
+                    self.head = Some(new_head);
+                } else {
+                    self.tail = None;
+                }
+                f(Rc::try_unwrap(old_head).ok().unwrap().into_inner().value);
+            } else {
+                self.head = Some(old_head);
+                break;
+            }
+        }
+    }
+
     pub fn pop_front(&mut self) -> Option<T> {
         self.head.take().map(|old_head| {
             if let Some(new_head) = old_head.borrow_mut().next.take() {
