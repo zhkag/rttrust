@@ -1,11 +1,11 @@
 use components::uart::{UartOps, DeviceUart, SerialConfigure};
 
-struct StmUart{
-    uart: DeviceUart,
+struct StmUart<'a>{
+    uart: &'a mut UsartTypeDef,
 }
 
 
-impl UartOps for StmUart {
+impl UartOps for StmUart<'_> {
     fn configure(&mut self,  _cfg: &mut SerialConfigure){
 
     }
@@ -13,10 +13,10 @@ impl UartOps for StmUart {
 
     }
     fn putc(&mut self,  c: char){
-        UsartTypeDef::init().putc(c);
+        self.uart.putc(c);
     }
     fn getc(&mut self) -> u8{
-        if let Some(c) =  UsartTypeDef::init().getc(){
+        if let Some(c) =  self.uart.getc(){
             return c as u8;
         }
         0
@@ -26,15 +26,15 @@ impl UartOps for StmUart {
 
 use components::drivers::DeviceRegister;
 
-static mut _HW_UART1: Option<StmUart> = None;
+static mut _HW_UART1: Option<DeviceUart> = None;
 
 pub fn hw_usart_init(){
-    let mut stm_uart = StmUart{uart: DeviceUart::new()};
+    let stm_uart = StmUart{uart: UsartTypeDef::init()};
     let _hw_uart1 = unsafe {&mut _HW_UART1};
-    *_hw_uart1 = Some(StmUart{uart: DeviceUart::new()});
+    *_hw_uart1 = Some(DeviceUart::new());
     let _hw_uart1_mut = _hw_uart1.as_mut().unwrap();
     UsartTypeDef::init().usart_init();
-    _hw_uart1_mut.uart.register("uart1",&mut stm_uart);
+    _hw_uart1_mut.register("uart1", stm_uart);
 }
 
 use crate::board::board::{RccTypeDef, NvicType, USART1_BASE, GPIOA_BASE};

@@ -1,5 +1,6 @@
 use crate::system;
 use crate::system::System;
+use crate::scheduler::Scheduler;
 use crate::tick;
 use crate::list::List;
 
@@ -29,22 +30,15 @@ impl Timer {
         timer.as_mut().unwrap().list_mut().init();
         timer.as_mut().unwrap()
     }
+
+    pub fn timeout_tick(&self) -> usize{
+        self.timeout_tick
+    }
+
     pub fn start(&mut self){
         let libcpu = system!().libcpu();
         let level = libcpu.interrupt_disable();
         self.timeout_tick = tick!(get()) + self.init_tick;
-        let system = system!();
-        let timer_list = system.timer_list_mut();
-        let mut current = timer_list as *mut List<Self>;
-        for node in timer_list.iter_mut() {
-            current = node;
-            let timer = system.list_to_timer(node);
-            if self.timeout_tick > timer.timeout_tick {
-                continue;
-            }
-            break;
-        }
-        unsafe{&mut *current}.insert_after(&mut self.list);
         libcpu.interrupt_enable(level);
     }
 
@@ -63,19 +57,20 @@ impl System {
         unsafe { &mut *((list as usize - (&(&*(0 as *const Timer)).list) as *const List<Timer> as usize) as *mut Timer) }
     }
 
-    pub fn check(&self, tick:usize){
-        let libcpu = self.libcpu();
-        let level = libcpu.interrupt_disable();
-        let timer_list = system!(timer_list_mut());
-        let mut _current = timer_list as *mut List<Timer>;
-        for node in timer_list.iter_mut() {
-            _current = node;
-            let timer = self.list_to_timer(node);
-            if tick >= timer.timeout_tick {
-                timer.list_mut().remove();
-                (timer.timeout_func)(timer.parameter);
+    pub fn timer_check(&mut self, tick:usize){
+        self.scheduler_mut().thread_timer_check(tick); // 这里只处理了线程定时器，没有原生定时器
+    }
+}
+
+impl Scheduler {
+    pub fn thread_timer_check(&mut self, tick:usize){
+        let list = self.thread_timer_list_mut();
+        list.pop_with_cmp(&tick,
+            |tick, b| *tick > b.thread_timer_mut().timeout_tick,
+            |mut thread| {
+                let timer_parameter = &mut thread as *mut crate::thread::Thread as *mut ();
+                (thread.thread_timer_mut().timeout_func)(timer_parameter)
             }
-        }
-        libcpu.interrupt_enable(level);
+        );
     }
 }

@@ -1,9 +1,8 @@
 use crate::println;
 use crate::object::Object;
 use crate::timer::Timer;
-use crate::{scheduler, schedule, scheduler::Scheduler};
-use crate::list::List;
-use crate::{thread_self, Error};
+use crate::{scheduler, schedule};
+use crate::{thread_self_mut, thread_self, Error};
 use crate::system;
 
 // use core::ops::{BitAnd,BitOr,Not};
@@ -59,7 +58,6 @@ enum SuspendWithFlag
     UNINTERRUPTIBLE,
 }
 
-
 #[derive(PartialEq)]
 #[derive(Copy, Clone)]
 pub struct Thread
@@ -71,7 +69,6 @@ pub struct Thread
     stack_addr: *mut (),
     stack_size:u32,
     error:Error,
-    list:List<Self>,
     number_mask:u32,
     current_priority:u8,
     init_priority:u8,
@@ -79,6 +76,7 @@ pub struct Thread
     init_tick:u8,
     remaining_tick:u8,
     thread_timer:Option<Timer>,
+    timer_run:bool,
 }
 
 
@@ -94,7 +92,6 @@ impl Thread {
             stack_size,
             sp:core::ptr::null_mut(),
             error:Error::Ok,
-            list:List::new(),
             init_priority:priority,
             current_priority:priority,
             number_mask: 1 << priority,
@@ -102,9 +99,22 @@ impl Thread {
             init_tick:tick,
             remaining_tick:tick,
             thread_timer:None,
+            timer_run:false,
         };
         thread
     }
+    pub fn timer_run(&self) -> bool{
+        self.timer_run
+    }
+
+    pub fn timeout_tick(&self) -> usize{
+        self.thread_timer.as_ref().unwrap().timeout_tick()
+    }
+
+    pub fn thread_timer_mut(&mut self) -> &mut Timer{
+        self.thread_timer.as_mut().unwrap()
+    }
+
     fn as_mut_ptr(&mut self) -> *mut Self {
         self as *mut Self
     }
@@ -114,9 +124,9 @@ impl Thread {
         let libcpu = system!().libcpu();
         let level = libcpu.interrupt_disable();
         thread.error = Error::TimeOut;
-        thread.list.remove();
         libcpu.interrupt_enable(level);
-        scheduler!(insert_thread(thread));
+        thread.timer_run = false;
+        scheduler!(insert_thread(*thread));
         schedule!();
     }
 
@@ -126,7 +136,7 @@ impl Thread {
             Err(error) => {println!("\x1b[31m Thread Error  {}\x1b[0m",error)},
             Ok(()) => {}
         }
-        if let Some(thread) = thread_self!() {
+        if let Some(thread) = thread_self_mut!() {
             thread.stat = Status::Init as u8;
         }
         schedule!();
@@ -144,8 +154,6 @@ impl Thread {
 
         let timer_parameter = thread_mut.as_mut_ptr() as *mut ();
         Timer::init(&mut thread_mut.thread_timer, Self::thread_timeout, timer_parameter, 0, 0);
-        
-        thread_mut.list_mut().init();
         thread_mut
     }
 
@@ -157,7 +165,7 @@ impl Thread {
             libcpu.interrupt_enable(level);
             return Err(Error::Error);
         }
-        scheduler!(remove_thread(self));
+        // scheduler!(remove_thread(self));
         let stat = match suspend_flag {
             SuspendWithFlag::INTERRUPTIBLE => Status::SUSPEND_INTERRUPTIBLE as u8,
             _ => unreachable!(),
@@ -177,6 +185,7 @@ impl Thread {
                 let timer = self.thread_timer.as_mut().unwrap();
                 timer.control(tick);
                 timer.start();
+                self.timer_run = true;
                 libcpu.interrupt_enable(level);
                 schedule!();
             },
@@ -202,7 +211,7 @@ impl Thread {
         if (self.stat & Status::SuspendMask as u8) != Status::SuspendMask as u8{
             return;
         }
-        scheduler!(insert_thread(self));
+        scheduler!(insert_thread(*self));
     }
 
     pub fn startup(&mut self){
@@ -228,17 +237,13 @@ impl Thread {
         }
         self.remaining_tick
     }
-
-    pub fn list_mut(&mut self) -> &mut List<Self> {
-        &mut self.list
-    }
 }
 
-impl Scheduler {
-    pub fn list_to_thread(&self, list: *mut List<Thread>) -> &mut Thread {
-        #[allow(deref_nullptr)]
-        unsafe { &mut *((list as usize - (&(&*(0 as *const Thread)).list) as *const List<Thread> as usize) as *mut Thread) }
-    }
+#[macro_export]
+macro_rules! thread_self_mut {
+    () => {{
+        $crate::scheduler!(current_thread_mut())
+    }};
 }
 
 #[macro_export]
@@ -251,6 +256,6 @@ macro_rules! thread_self {
 #[macro_export]
 macro_rules! thread_sleep {
     ($tick:expr) => {{
-        $crate::scheduler!(current_thread()).unwrap().sleep($tick)
+        $crate::scheduler!(current_thread_mut()).unwrap().sleep($tick)
     }};
 }

@@ -1,16 +1,17 @@
 use crate::object::{ObjectInformation,ObjectClassType,ObjectInfoType};
-use crate::{println, Error};
+use crate::Error;
 use crate::scheduler::Scheduler;
 use crate::bsp::BspTrait;
 use crate::thread::Thread;
 use crate::tick::Tick;
-use crate::list::List;
 use crate::timer::Timer;
 use crate::irq::Interrupt;
 use crate::kservice;
 use crate::components;
 use crate::libcpu::LibcpuTrait;
 use crate::mem::SmallMem;
+use crate::heaplist;
+use crate::Box;
 
 static mut SYSTREM: Option<System> = None;
 fn main_fun(_parameter:*mut ()) -> Result<(),Error>{
@@ -26,12 +27,12 @@ static mut MAIN_THREAD: Option<Thread> = None;
 pub struct System{
     scheduler:Option<Scheduler>,
     tick:Tick,
-    timer_list:List<Timer>,
+    timer_list:heaplist::List<Timer>,
     pub(super) object_container:[ObjectInformation; ObjectInfoType::Unknown as usize],
     interrupt:Interrupt,
-    pub libcpu: Option<*mut dyn LibcpuTrait>,
-    pub bsp: Option<*mut dyn BspTrait>,
-    heap: Option<*mut SmallMem>,
+    pub libcpu: Option<Box<dyn LibcpuTrait>>,
+    pub bsp: Option<Box<dyn BspTrait>>,
+    heap: Option<&'static mut SmallMem>,
 }
 
 impl System {
@@ -48,7 +49,7 @@ impl System {
         let systerm = Self{
             scheduler:None,
             tick:Tick::new(),
-            timer_list:List::new(),
+            timer_list:heaplist::List::new(),
             object_container:[ObjectInformation::new(); ObjectInfoType::Unknown as usize],
             interrupt:Interrupt::init(),
             libcpu:None,
@@ -64,15 +65,13 @@ impl System {
         let main_thread = Thread::init(thread_static,"main", main_fun, core::ptr::null_mut(),
                                                     stack_start, stack_size, 20, 32);
 
-        println!("{}",main_thread.parent);
         main_thread.startup();
     }
     fn init(&mut self)  {
         self.object_container_init();
-        self.bsp().init();
+        self.bsp().unwrap().init();
         components::board_init();
         kservice::show_version();
-        self.timer_init();
         self.scheduler_init();
         self.main_app_init();
         crate::idle::rt_thread_idle_init();
@@ -81,10 +80,6 @@ impl System {
     fn object_container_init(&mut self) {
         self.object_container[ObjectInfoType::Thread as usize].init(ObjectClassType::Thread,core::mem::size_of::<Thread>().try_into().unwrap());
         self.object_container[ObjectInfoType::Device as usize].init(ObjectClassType::Device,core::mem::size_of::<Thread>().try_into().unwrap());
-    }
-
-    fn timer_init(&mut self) {
-        self.timer_list.init();
     }
 
     fn scheduler_init(&mut self) {
@@ -103,7 +98,7 @@ impl System {
         &mut self.tick
     }
 
-    pub fn timer_list_mut(&mut self) ->&mut List<Timer>{
+    pub fn timer_list_mut(&mut self) ->&mut heaplist::List<Timer>{
         &mut self.timer_list
     }
 
@@ -112,11 +107,11 @@ impl System {
         self.scheduler_mut().start();
         unreachable!();
     }
-    pub fn set_heap(&mut self, heap:*mut SmallMem){
+    pub fn set_heap(&mut self, heap:&'static mut SmallMem){
         self.heap = Some(heap);
     }
-    pub fn heap(&mut self) -> &mut SmallMem{
-        unsafe {&mut *self.heap.unwrap()}
+    pub fn heap(&'static mut self) -> &'static mut SmallMem{
+        self.heap.as_mut().unwrap()
     }
 }
 

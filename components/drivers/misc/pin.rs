@@ -1,5 +1,5 @@
 use crate::drivers::core::device::{Device, DeviceRegister, DeviceOps, DeviceClassType};
-
+use kernel::Box;
 pub trait PinOps
 {
     fn pin_mode(&mut self,  _pin: usize, _mode: u8);
@@ -15,7 +15,7 @@ pub trait PinOps
 pub struct DevicePin
 {
     parent:Device,
-    pub ops: Option<*mut dyn PinOps>,
+    pub ops: Option<Box<dyn PinOps>>,
 }
 
 pub struct DevicePinValue
@@ -39,8 +39,8 @@ impl DevicePin {
             ops: None,
         }
     }
-    pub fn ops(&self) -> &mut dyn PinOps{
-        unsafe { &mut *(self.ops.unwrap())}
+    pub fn ops(&mut self) -> &mut Box<dyn PinOps>{
+        self.ops.as_mut().unwrap()
     }
     pub fn find(name:&str)->Option<&mut DevicePin>{
         if let Some(device) = Device::find(name){
@@ -56,12 +56,12 @@ impl DevicePin {
 }
 
 impl<T: PinOps + 'static> DeviceRegister<T> for DevicePin {
-    fn register(&mut self, name:&str, ops:*mut T)
+    fn register(&mut self, name:&str, ops:T)
     {
         let _hw_pin = unsafe {&mut _HW_PIN};
         *_hw_pin = Some(DevicePin::new());
         let _hw_pin_mut = _hw_pin.as_mut().unwrap();
-        _hw_pin_mut.ops = Some(ops);
+        _hw_pin_mut.ops = Some(Box::new(ops));
         _hw_pin_mut.parent.init(DeviceClassType::Pin);
         _hw_pin_mut.parent.register(name);
     }
@@ -112,7 +112,7 @@ impl DevicePinMode {
     }
 }
 
-fn pin_ops() -> &'static mut dyn PinOps{
+fn pin_ops() -> &'static mut Box<dyn PinOps>{
     let _hw_pin = unsafe {&mut _HW_PIN};
     let _hw_pin_mut = _hw_pin.as_mut().unwrap();
     _hw_pin_mut.ops()
