@@ -18,6 +18,7 @@ mod components;
 mod mem;
 pub mod heaplist;
 pub extern crate alloc;
+pub use alloc::vec::Vec;
 pub use alloc::boxed::Box;
 pub use alloc::string::String;
 pub use alloc::collections::BTreeMap;
