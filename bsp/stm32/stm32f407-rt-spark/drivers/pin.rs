@@ -1,10 +1,7 @@
-use components::drivers::DeviceRegister;
 use components::pin::{PinOps,DevicePin};
 
 use kernel::println;
-
-const PERIPH_BASE: u32 = 0x40000000;
-const AHB1PERIPH_BASE: u32 = PERIPH_BASE + 0x00020000;
+use crate::board::board::AHB1PERIPH_BASE;
 const GPIOA_BASE: u32 = AHB1PERIPH_BASE;
 
 #[repr(C)]
@@ -45,7 +42,7 @@ impl GPIOTypeDef{
             }
         }
     }
-    
+
     pub fn pin_set(&mut self, pinx:u32, status:bool)
     {
         if status {
@@ -55,7 +52,7 @@ impl GPIOTypeDef{
             self.bsrr |= pinx << 16;
         }
     }
-    
+
     pub fn af_set(&mut self, pinx:u32, afx:u32)
     {
         let mut pos:u32;
@@ -63,7 +60,7 @@ impl GPIOTypeDef{
         for pinpos in 0..16 {
             pos = 1 << pinpos;      /* 一个个位检查 */
             curpin = pinx & pos;    /* 检查引脚是否要设置 */
-    
+
             if curpin == pos{
                 self.afr[pinpos >> 3] &= !(0x0F << ((pinpos & 0x07) * 4));
                 self.afr[pinpos >> 3] |= afx << ((pinpos & 0x07) * 4);
@@ -161,7 +158,7 @@ impl PinOps for StmPin {
 
 const RCC_BASE: u32 = AHB1PERIPH_BASE + 0x3800;
 const AHB1ENR: u32 = RCC_BASE + 0x30;
-
+use components::drivers::DeviceRegister;
 use kernel::macros::init_export;
 #[init_export("1")]
 fn device_pin() {
@@ -170,7 +167,7 @@ fn device_pin() {
         let ahb1enr = &mut *ahb1enr_ptr;
         *ahb1enr |= 1 << 5;
     }
-    let stm_pin = StmPin{};
-    DevicePin::new().register("pin",stm_pin);
+    let stm_device_pin = StmPin{};
+    DevicePin::new().register("pin",stm_device_pin);
 }
 

@@ -10,23 +10,28 @@ pub mod list;
 pub mod tick;
 pub mod timer;
 pub mod kservice;
+pub mod drivers;
 mod libcpu;
 mod irq;
 mod include;
 mod components;
 mod mem;
-mod heaplist;
+pub mod heaplist;
 pub extern crate alloc;
 pub use alloc::boxed::Box;
+pub use alloc::string::String;
+pub use alloc::collections::BTreeMap;
 
 pub use core::result::Result as Result;
 
 pub use libcpu::{LibcpuTrait, sys_tick};
 pub use bsp::BspTrait;
-use core::panic::PanicInfo;
+pub use drivers::core::device::DeviceOps;
 
 pub extern crate macros;
 
+pub use components::entry;
+use core::panic::PanicInfo;
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     if let Some(location) = info.location() {

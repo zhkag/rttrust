@@ -2,7 +2,7 @@
 use crate::system;
 
 #[no_mangle]
-fn entry() {
+pub fn entry() {
     start_init();
     system!(startup());
     unreachable!();

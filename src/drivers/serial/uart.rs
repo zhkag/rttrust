@@ -1,6 +1,8 @@
 use crate::drivers::core::device::{Device, DeviceOps, DeviceClassType};
 use crate::drivers::DeviceRegister;
-use kernel::Box;
+
+use crate::Box;
+use crate::system;
 #[repr(C)]
 pub struct SerialConfigure {
     pub baud_rate: u32,
@@ -43,33 +45,30 @@ impl DeviceUart {
     pub fn ops(&mut self) -> &mut Box<dyn UartOps>{
         self.ops.as_mut().unwrap()
     }
-    pub fn find(name:&str)->Option<&mut DeviceUart>{
-        if let Some(device) = Device::find(name){
-            return Some(DeviceUart::device_to_uart(device));
-        }
-        None
-    }
-    
-    fn device_to_uart(parent: *mut Device) -> &'static mut DeviceUart {
-        #[allow(deref_nullptr)]
-        unsafe { &mut *((parent as usize - (&(&*(0 as *const DeviceUart)).parent) as *const Device as usize) as *mut DeviceUart) }
-    }
 }
 
 impl<T: UartOps + 'static> DeviceRegister<T> for DeviceUart {
-    fn register(&mut self, name:&str, ops:T)
+    fn register(&mut self, _name:&str, ops:T)
     {
-        self.ops = Some(Box::new(ops));
-        self.parent.init(DeviceClassType::Char);
-        self.parent.register(name);
+        let mut hw_uart = Some(DeviceUart::new());
+        let hw_uart_mut = hw_uart.as_mut().unwrap();
+        hw_uart_mut.ops = Some(Box::new(ops));
+        hw_uart_mut.parent.init(DeviceClassType::Char);
+        system!(device_register(hw_uart.unwrap()));
     }
 }
 
 impl DeviceOps for DeviceUart {
+    fn name(&self) -> &str {
+        "uart1"
+    }
     fn read(&mut self, _pos:isize, _buffer: Option<*mut ()>, size:usize) -> isize{
         size as isize
     }
-    fn write(&mut self, _pos:isize, _buffer: Option<*const ()>, size:usize) -> isize{
+    fn write(&mut self, _pos:isize, buffer: Option<*const ()>, size:usize) -> isize{
+        if buffer.is_none() || size != core::mem::size_of::<char>() { return 0; }
+        let pin_value = unsafe { &mut *(buffer.unwrap() as *mut char)};
+        self.ops().putc(*pin_value);
         size as isize
     }
     fn control(&mut self, _cmd:usize, _args: Option<*mut ()>) -> isize{

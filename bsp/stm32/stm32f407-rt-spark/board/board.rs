@@ -2,9 +2,9 @@ const SCS_BASE: u32 = 0xE000E000;
 const NVIC_BASE: u32 = SCS_BASE + 0x0100;
 const SCB_BASE: u32 = SCS_BASE + 0x0D00;
 const PERIPH_BASE: u32 = 0x40000000;
-const APB1PERIPH_BASE: u32 = PERIPH_BASE;
+pub const APB1PERIPH_BASE: u32 = PERIPH_BASE;
 const APB2PERIPH_BASE: u32 = PERIPH_BASE + 0x00010000;
-const AHB1PERIPH_BASE: u32 = PERIPH_BASE + 0x00020000;
+pub const AHB1PERIPH_BASE: u32 = PERIPH_BASE + 0x00020000;
 const PWR_BASE: u32 = APB1PERIPH_BASE + 0x7000;
 pub const USART1_BASE: u32 = APB2PERIPH_BASE + 0x1000;
 const RCC_BASE: u32 = AHB1PERIPH_BASE + 0x3800;
@@ -203,33 +203,33 @@ impl RccTypeDef{
         let mut retry:u32 = 0;
         let mut retval:u8 = 0;
         let mut swsval:u8 = 0;
-    
+
         self.cr |= 1 << 16; /* HSEON = 1, 开启HSE */
-    
+
         while ((self.cr & (1 << 17)) == 0) && (retry < 0x7FFF) {
             retry += 1;        /* 等待HSE RDY */
         }
-    
+
         if retry == 0x7FFF {
             retval = 1;     /* HSE无法就绪 */
             return retval;
         }
-    
+
         self.apb1enr |= 1 << 28;                /* 电源接口时钟使能 */
         pwr.cr |= 3 << 14;                     /* 高性能模式,时钟可到168Mhz */
-        
+
         self.pllcfgr |= 0x3F & pllm;            /* 设置主PLL预分频系数,  PLLM[5:0]: 2~63 */
         self.pllcfgr |= plln << 6;              /* 设置主PLL倍频系数,    PLLN[8:0]: 192~432 */
         self.pllcfgr |= ((pllp >> 1) - 1) << 16;/* 设置主PLL的p分频系数, PLLP[1:0]: 0~3, 代表2~8分频 */
         self.pllcfgr |= pllq << 24;             /* 设置主PLL的q分频系数, PLLQ[3:0]: 2~15 */
         self.pllcfgr |= 1 << 22;                /* 设置主PLL的时钟源来自HSE */
-    
+
         self.cfgr |= 0 << 4;                    /* HPRE[3:0]  = 0, AHB  不分频, rcc_hclk1/2/3 = pll_p_ck */
         self.cfgr |= 5 << 10;                   /* PPRE1[2:0] = 5, APB1 4分频   rcc_pclk1 = pll_p_ck / 4 */
         self.cfgr |= 4 << 13;                   /* PPRE2[2:0] = 4, APB2 2分频   rcc_pclk2 = pll_p_ck / 2 */
-    
+
         self.cr |= 1 << 24;                     /* 打开主PLL */
-    
+
         retry = 0;
         while (self.cr & (1 << 25)) == 0 {      /* 等待PLL准备好 */
             retry += 1;
@@ -238,14 +238,14 @@ impl RccTypeDef{
                 break;
             }
         }
-    
+
         flash.acr |= 1 << 8;                   /* 指令预取使能 */
         flash.acr |= 1 << 9;                   /* 指令cache使能 */
         flash.acr |= 1 << 10;                  /* 数据cache使能 */
         flash.acr |= 5 << 0;                   /* 5个CPU等待周期 */
-        
+
         self.cfgr |= 2 << 0;                    /* 选择主PLL作为系统时钟 */
-        
+
         retry = 0;
         while swsval != 3                     /* 等待成功将系统时钟源切换为pll_p_ck */
         {
@@ -265,10 +265,10 @@ impl RccTypeDef{
 use kernel::BspTrait;
 use crate::drivers::uart::hw_usart_init;
 struct Board<'a> {
-    console_device: Option<&'a mut DeviceUart>,
+    console_device: Option<&'a mut kernel::Box<dyn DeviceOps>>,
 }
 
-use components::uart::DeviceUart;
+use components::DeviceOps;
 
 impl BspTrait for Board<'_> {
     fn init(&self){
@@ -278,10 +278,10 @@ impl BspTrait for Board<'_> {
     }
     fn putc(&mut self,  c: char) {
         if let Some(pin) = self.console_device.as_mut(){
-            pin.ops().putc(c);
+            pin.write(1, Some(&c as *const char as *const()), 4);
         }
         else{
-            self.console_device = DeviceUart::find("uart1");
+            self.console_device = kernel::system!(device_list_mut()).get_mut("uart1");
         }
     }
 }

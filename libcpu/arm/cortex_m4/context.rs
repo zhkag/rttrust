@@ -179,7 +179,7 @@ impl LibcpuTrait for Libcpu {
             asm!("MSR     PRIMASK, r1");
         }
     }
-    fn stack_init(&self, entry: fn(*mut ())-> Result<(),Error>, parameter:*mut (), stack_addr:*mut (), exit: fn(_err:Result<(),Error>)) -> *mut (){
+    fn stack_init(&self, entry: fn(*mut ())-> kernel::Result<(),Error>, parameter:*mut (), stack_addr:*mut (), exit: fn(_err:kernel::Result<(),Error>)) -> *mut (){
         cpuport::rt_hw_stack_init(entry, parameter, stack_addr, exit)
     }
 }

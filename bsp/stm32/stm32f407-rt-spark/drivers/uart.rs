@@ -21,20 +21,13 @@ impl UartOps for StmUart<'_> {
         }
         0
     }
-    
 }
 
 use components::drivers::DeviceRegister;
-
-static mut _HW_UART1: Option<DeviceUart> = None;
-
 pub fn hw_usart_init(){
     let stm_uart = StmUart{uart: UsartTypeDef::init()};
-    let _hw_uart1 = unsafe {&mut _HW_UART1};
-    *_hw_uart1 = Some(DeviceUart::new());
-    let _hw_uart1_mut = _hw_uart1.as_mut().unwrap();
     UsartTypeDef::init().usart_init();
-    _hw_uart1_mut.register("uart1", stm_uart);
+    DeviceUart::new().register("uart1",stm_uart);
 }
 
 use crate::board::board::{RccTypeDef, NvicType, USART1_BASE, GPIOA_BASE};
@@ -74,7 +67,7 @@ impl UsartTypeDef{
 
         rcc.ahb1enr_0();
         rcc.ahb2enr_4();
-        
+
         let gpioa_base = GPIOTypeDef::init(GPIOA_BASE);
 
         gpioa_base.set(1 << 9, 2, 0, 1, 1);    /* 串口TX脚 模式设置 */
@@ -94,7 +87,7 @@ impl UsartTypeDef{
         self.cr1 |= 1 << 2;    /* 串口接收使能 */
         self.cr1 |= 1 << 5;    /* 接收缓冲区非空中断使能 */
         NvicType::init().nvic_init(3, 3, 37, 2); /* 组2，最低优先级 */
-        
+
         self.cr1 |= 1 << 13;   /* 串口使能 */
 
     }

@@ -74,8 +74,8 @@ pub struct ObjectInformation
 pub struct Object
 {
     name:[u8;NAME_MAX],
-    r#type:ObjectClassType,                              
-    flag:u8,                              
+    r#type:ObjectClassType,
+    flag:u8,
     list:List<Self>,
 }
 
@@ -96,9 +96,9 @@ impl Object {
             name: [b'\0'; NAME_MAX],
             r#type: ObjectClassType::Null,
             flag: 0,
-            list: List::new(), 
+            list: List::new(),
         };
-        object 
+        object
     }
     pub fn init(&mut self, r#type:ObjectClassType, name:&str) {
         self.r#type = r#type;
@@ -133,7 +133,7 @@ impl Object {
 impl ObjectInformation {
     pub fn new() -> Self {
         let information = ObjectInformation{
-            object_class_type: ObjectClassType::Null, 
+            object_class_type: ObjectClassType::Null,
             object_list: List::new(),
             object_size: 0,
         };

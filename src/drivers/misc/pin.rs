@@ -1,5 +1,6 @@
-use crate::drivers::core::device::{Device, DeviceRegister, DeviceOps, DeviceClassType};
-use kernel::Box;
+use crate::drivers::core::device::{Device, DeviceRegister, DeviceOps, DeviceClassType, DeviceSelf};
+use crate::Box;
+use crate::system;
 pub trait PinOps
 {
     fn pin_mode(&mut self,  _pin: usize, _mode: u8);
@@ -30,8 +31,6 @@ pub struct DevicePinMode
     mode:u8,
 }
 
-static mut _HW_PIN: Option<DevicePin> = None;
-
 impl DevicePin {
     pub fn new() -> Self   {
         DevicePin{
@@ -42,32 +41,26 @@ impl DevicePin {
     pub fn ops(&mut self) -> &mut Box<dyn PinOps>{
         self.ops.as_mut().unwrap()
     }
-    pub fn find(name:&str)->Option<&mut DevicePin>{
-        if let Some(device) = Device::find(name){
-            return Some(DevicePin::device_to_pin(device));
-        }
-        None
-    }
-    
-    fn device_to_pin(parent: *mut Device) -> &'static mut DevicePin {
-        #[allow(deref_nullptr)]
-        unsafe { &mut *((parent as usize - (&(&*(0 as *const DevicePin)).parent) as *const Device as usize) as *mut DevicePin) }
-    }
 }
 
 impl<T: PinOps + 'static> DeviceRegister<T> for DevicePin {
-    fn register(&mut self, name:&str, ops:T)
+    fn register(&mut self, _name:&str, ops:T)
     {
-        let _hw_pin = unsafe {&mut _HW_PIN};
-        *_hw_pin = Some(DevicePin::new());
-        let _hw_pin_mut = _hw_pin.as_mut().unwrap();
+        let mut hw_pin = Some(DevicePin::new());
+        let _hw_pin_mut = hw_pin.as_mut().unwrap();
         _hw_pin_mut.ops = Some(Box::new(ops));
         _hw_pin_mut.parent.init(DeviceClassType::Pin);
-        _hw_pin_mut.parent.register(name);
+        system!(device_register(hw_pin.unwrap()));
     }
 }
 
 impl DeviceOps for DevicePin {
+    fn name(&self) -> &str {
+        "pin"
+    }
+    fn device_self(&mut self) -> Option<DeviceSelf> {
+        Some(DeviceSelf::Pin(self))
+    }
     fn read(&mut self, _pos:isize, buffer: Option<*mut ()>, size:usize) -> isize{
         if buffer.is_none() || size != core::mem::size_of::<DevicePinValue>() { return 0; }
         let pin_value = unsafe { &mut *(buffer.unwrap() as *mut DevicePinValue)};
@@ -112,24 +105,32 @@ impl DevicePinMode {
     }
 }
 
-fn pin_ops() -> &'static mut Box<dyn PinOps>{
-    let _hw_pin = unsafe {&mut _HW_PIN};
-    let _hw_pin_mut = _hw_pin.as_mut().unwrap();
-    _hw_pin_mut.ops()
-}
-
 pub fn pin_get(name:&str) -> usize{
-    pin_ops().pin_get(name)
+    let pin_self = system!(device_list_mut()).get_mut("pin").unwrap().device_self().unwrap();
+    if let DeviceSelf::Pin(device_pin) = pin_self {
+        return device_pin.ops().pin_get(name)
+    }
+    0
 }
 
 pub fn pin_mode(pin: usize, mode: u8){
-    pin_ops().pin_mode(pin, mode);
+    let pin_self = system!(device_list_mut()).get_mut("pin").unwrap().device_self().unwrap();
+    if let DeviceSelf::Pin(device_pin) = pin_self {
+        device_pin.ops().pin_mode(pin, mode);
+    }
 }
 
 pub fn pin_write(pin: usize, value: bool){
-    pin_ops().pin_write(pin, value);
+    let pin_self = system!(device_list_mut()).get_mut("pin").unwrap().device_self().unwrap();
+    if let DeviceSelf::Pin(device_pin) = pin_self {
+        device_pin.ops().pin_write(pin, value);
+    }
 }
 
 pub fn pin_read(pin: usize) -> bool{
-    pin_ops().pin_read(pin)
+    let pin_self = system!(device_list_mut()).get_mut("pin").unwrap().device_self().unwrap();
+    if let DeviceSelf::Pin(device_pin) = pin_self {
+        return device_pin.ops().pin_read(pin)
+    }
+    false
 }
