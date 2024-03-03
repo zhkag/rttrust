@@ -1,10 +1,11 @@
 use crate::{*};
-use components::pin::{*};
+use components::pin::*;
+use kernel::drivers::watchdog::watchdog::DeviceWatchDogCTRL;
 
 #[no_mangle]
 fn main() -> Result<(),Error>{
     let timer_static = unsafe {&mut TEST_TIMER};
-    
+
     let _timer = Timer::init(timer_static, timer_timeout, core::ptr::null_mut(), 0, 0);
     _timer.start();
 
@@ -17,6 +18,11 @@ fn main() -> Result<(),Error>{
 
     let led_red = pin_get("PF.12");
     pin_mode(led_red,0);
+
+    if let Some(wdt) = system!(device_list_mut()).get_mut("wdt") {
+        wdt.control(DeviceWatchDogCTRL::SetTimeout as usize, Some(&mut 1 as *mut i32 as *mut()));
+        wdt.control(DeviceWatchDogCTRL::Start as usize, None);
+    }
     loop {
         pin_write(led_red, true);
         kernel::thread_sleep!(500)?;
