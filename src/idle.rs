@@ -1,3 +1,5 @@
+use crate::Vec;
+use crate::system::System;
 use crate::thread::Thread;
 use crate::Error;
 
@@ -7,8 +9,8 @@ static mut IDLE_THREAD:Option<Thread> = None;
 
 fn idle_fun(_parameter: *mut ()) -> Result<(),Error>{
     loop {
-        if let Some(wdt) = crate::system!(device_list_mut()).get_mut("wdt") {
-            wdt.control(crate::drivers::watchdog::watchdog::DeviceWatchDogCTRL::SetTimeout as usize, Some(&mut 1 as *mut i32 as *mut()));
+        for hook in crate::system!(idle_hook_list_mut()).iter() {
+            hook()
         }
     }
 }
@@ -20,4 +22,16 @@ pub fn rt_thread_idle_init(){
     let idle_thread = Thread::init(thread_static,"idle", idle_fun, core::ptr::null_mut(),
                                                 stack_start, stack_size, 31, 32);
     idle_thread.startup();
+}
+
+impl System {
+    fn idle_hook_list_mut(&mut self) -> &mut Vec<fn()>{
+        &mut self.idle_hook_list
+    }
+    pub fn idle_sethook(&mut self, hook:fn()){
+        self.idle_hook_list.push(hook);
+    }
+    pub fn idle_delhook(&mut self, hook:fn()){
+        self.idle_hook_list.retain(|&x| x != hook);
+    }
 }

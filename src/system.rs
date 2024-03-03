@@ -12,6 +12,7 @@ use crate::libcpu::LibcpuTrait;
 use crate::mem::SmallMem;
 use crate::heaplist;
 use crate::Box;
+use crate::Vec;
 use crate::String;
 use crate::BTreeMap;
 
@@ -37,6 +38,7 @@ pub struct System{
     pub libcpu: Option<Box<dyn LibcpuTrait>>,
     pub bsp: Option<Box<dyn BspTrait>>,
     pub device_list:BTreeMap<String,Box<dyn DeviceOps>>,
+    pub idle_hook_list:Vec<fn()>,
     heap: Option<&'static mut SmallMem>,
 }
 
@@ -60,6 +62,7 @@ impl System {
             libcpu:None,
             bsp:None,
             device_list:BTreeMap::new(),
+            idle_hook_list:Vec::new(),
             heap:None,
         };
         systerm
@@ -99,7 +102,7 @@ impl System {
     pub fn interrupt_mut(&mut self) ->&mut Interrupt {
         &mut self.interrupt
     }
-    
+
     pub fn tick_mut(&mut self) ->&mut Tick {
         &mut self.tick
     }

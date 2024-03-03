@@ -2,6 +2,13 @@ use crate::{*};
 use components::pin::*;
 use kernel::drivers::watchdog::watchdog::DeviceWatchDogCTRL;
 
+fn idle_hook()
+{
+    if let Some(wdt) = crate::system!(device_list_mut()).get_mut("wdt") {
+        wdt.control(DeviceWatchDogCTRL::SetTimeout as usize, Some(&mut 1 as *mut i32 as *mut()));
+    }
+}
+
 #[no_mangle]
 fn main() -> Result<(),Error>{
     let timer_static = unsafe {&mut TEST_TIMER};
@@ -23,6 +30,7 @@ fn main() -> Result<(),Error>{
         wdt.control(DeviceWatchDogCTRL::SetTimeout as usize, Some(&mut 1 as *mut i32 as *mut()));
         wdt.control(DeviceWatchDogCTRL::Start as usize, None);
     }
+    system!(idle_sethook(idle_hook));
     loop {
         pin_write(led_red, true);
         kernel::thread_sleep!(500)?;
