@@ -6,7 +6,11 @@ static mut IDLE_THREAD_STACK: [u8; IDLE_THREAD_STACK_SIZE] = [0; IDLE_THREAD_STA
 static mut IDLE_THREAD:Option<Thread> = None;
 
 fn idle_fun(_parameter: *mut ()) -> Result<(),Error>{
-    loop {}
+    loop {
+        if let Some(wdt) = crate::system!(device_list_mut()).get_mut("wdt") {
+            wdt.control(crate::drivers::watchdog::watchdog::DeviceWatchDogCTRL::SetTimeout as usize, Some(&mut 1 as *mut i32 as *mut()));
+        }
+    }
 }
 
 pub fn rt_thread_idle_init(){
