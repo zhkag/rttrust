@@ -28,7 +28,7 @@ struct StackFrame {
     exception_stack_frame: ExceptionStackFrame,
 }
 
-pub fn rt_hw_stack_init(entry: fn(*mut ()) -> Result<(),Error>, parameter:*mut (),stack_addr:*mut (),exit: fn(_err:Result<(),Error>))->*mut (){
+pub fn rt_hw_stack_init(entry: fn(*mut ()) -> kernel::Result<(),Error>, parameter:*mut (),stack_addr:*mut (),exit: fn(_err:kernel::Result<(),Error>))->*mut (){
     let mut stk: *mut () = (stack_addr as usize + core::mem::size_of::<u32>()) as *mut ();
     stk = ((stk as usize) & !7) as *mut ();
     stk = (stk as usize - core::mem::size_of::<StackFrame>()) as *mut ();

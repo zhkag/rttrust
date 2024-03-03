@@ -2,6 +2,7 @@
 #![no_std]
 #[allow(unused_imports)]
 use components;
+use kernel::system;
 #[allow(unused_imports)]
 use libcpu;
 
@@ -13,7 +14,7 @@ use kernel::thread;
 use kernel::timer;
 use kernel::Error;
 
-use components::DeviceOps;
+use kernel::drivers::core::device::DeviceSelf;
 use components::pin::{*};
 
 const TEST_THREAD_STACK_SIZE: usize = 10240;
@@ -21,18 +22,27 @@ static mut TEST_THREAD_STACK: [u8; TEST_THREAD_STACK_SIZE] = [0; TEST_THREAD_STA
 static mut TEST_THREAD: Option<thread::Thread> = None;
 
 fn test(_parameter:*mut ()) -> Result<(),Error>{
-    let pin = DevicePin::find("pin").unwrap();
-    let led_yellow = pin.ops().pin_get("PF.11");
-    let mut mode = DevicePinMode::init(led_yellow, 0);
+    let mut led_yellow = 0;
+    let mut pin_opt = system!(device_list_mut()).get_mut("pin");
+    if let Some(ref mut pin) = pin_opt {
+        if let DeviceSelf::Pin(pin) = pin.device_self().unwrap() {
+            led_yellow = pin.ops().pin_get("PF.11");
+        }
+        let mut mode = DevicePinMode::init(led_yellow, 0);
+        pin.control(0, mode.r#mut());
+    }
+    
     let mut value = DevicePinValue::init(led_yellow, true);
-    pin.control(0, mode.r#mut());
     loop {
-        value.set_value(true);
-        pin.write(0,value.r#const() ,core::mem::size_of::<DevicePinValue>());
-        kernel::thread_sleep!(100)?;
-        value.set_value(false);
-        pin.write(0,value.r#const() ,core::mem::size_of::<DevicePinValue>());
-        kernel::thread_sleep!(100)?;
+        if let Some(ref mut pin) = pin_opt {
+            value.set_value(true);
+            pin.write(0,value.r#const() ,core::mem::size_of::<DevicePinValue>());
+            kernel::thread_sleep!(100)?;
+            
+            value.set_value(false);
+            pin.write(0,value.r#const() ,core::mem::size_of::<DevicePinValue>());
+            kernel::thread_sleep!(100)?;
+        }
     }
 }
 

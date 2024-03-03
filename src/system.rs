@@ -12,6 +12,10 @@ use crate::libcpu::LibcpuTrait;
 use crate::mem::SmallMem;
 use crate::heaplist;
 use crate::Box;
+use crate::String;
+use crate::BTreeMap;
+
+use crate::DeviceOps;
 
 static mut SYSTREM: Option<System> = None;
 fn main_fun(_parameter:*mut ()) -> Result<(),Error>{
@@ -32,6 +36,7 @@ pub struct System{
     interrupt:Interrupt,
     pub libcpu: Option<Box<dyn LibcpuTrait>>,
     pub bsp: Option<Box<dyn BspTrait>>,
+    pub device_list:BTreeMap<String,Box<dyn DeviceOps>>,
     heap: Option<&'static mut SmallMem>,
 }
 
@@ -54,6 +59,7 @@ impl System {
             interrupt:Interrupt::init(),
             libcpu:None,
             bsp:None,
+            device_list:BTreeMap::new(),
             heap:None,
         };
         systerm

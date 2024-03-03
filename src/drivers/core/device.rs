@@ -1,6 +1,4 @@
-use kernel::system;
-use kernel::object::Object;
-use kernel::object::ObjectClassType;
+use crate::object::Object;
 
 #[repr(C)]
 #[allow(dead_code)]
@@ -53,7 +51,13 @@ pub struct Device
     user_data: *mut (),                //< device private data */
 }
 
+use crate::Box;
+use crate::system::System;
+use alloc::string::ToString;
+
 pub trait DeviceOps {
+    fn name(&self) -> &str {""}
+    fn device_self(&mut self) -> Option<DeviceSelf> {None}
     fn rx_indicate(&mut self, _size:usize) -> isize { 0 }
     fn tx_complete(&mut self, _buffer: *mut ()) -> isize { 0 }
     fn init(&mut self) -> isize { 0 }
@@ -64,7 +68,15 @@ pub trait DeviceOps {
     fn control(&mut self, _cmd:usize, _args: Option<*mut ()>) -> isize { 0 }
 }
 
-#[allow(dead_code)]
+impl System {
+    pub fn device_list_mut(&mut self) -> &mut crate::BTreeMap<alloc::string::String, Box<dyn DeviceOps>>{
+        &mut self.device_list
+    }
+    pub fn device_register(&mut self,item: impl DeviceOps + 'static){
+        self.device_list.insert(item.name().to_string(), Box::new(item));
+    }
+}
+
 impl Device {
     pub fn new() -> Self{
         let derive = Self{
@@ -81,27 +93,15 @@ impl Device {
     pub fn init(&mut self, r#type: DeviceClassType){
         self.r#type = r#type;
     }
-    pub fn find(name: &str) -> Option<&mut Device>{
-        let system = system!();
-        if let Some(object) = system.object_find(name,ObjectClassType::Device){
-            return Some(Device::object_to_device(object));
-        }
-        None
-    }
-
-    pub fn register(&mut self, name: &str){
-        if Device::find(name).is_some() {
-            return ;
-        }
-        self.parent.init(ObjectClassType::Device, name);
-    }
-
-    fn object_to_device(parent: *mut Object) -> &'static mut Device {
-        #[allow(deref_nullptr)]
-        unsafe { &mut *((parent as usize - (&(&*(0 as *const Device)).parent) as *const Object as usize) as *mut Device) }
-    }
 }
 
 pub trait DeviceRegister<T> {
     fn register(&mut self, name:&str, ops:T);
+}
+
+use crate::drivers::pin::DevicePin;
+use crate::drivers::serial::uart::DeviceUart;
+pub enum DeviceSelf<'a> {
+    Pin(&'a mut DevicePin),
+    Uart(&'a mut DeviceUart),
 }
