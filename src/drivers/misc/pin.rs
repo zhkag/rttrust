@@ -18,13 +18,15 @@ pub struct DevicePin
     parent:Device,
     pub ops: Option<Box<dyn PinOps>>,
 }
-
+use crate::To;
+#[derive(To)]
 pub struct DevicePinValue
 {
     pin:usize,
     value:bool,
 }
 
+#[derive(To)]
 pub struct DevicePinMode
 {
     pin:usize,
@@ -63,19 +65,22 @@ impl DeviceOps for DevicePin {
     }
     fn read(&mut self, _pos:isize, buffer: Option<*mut ()>, size:usize) -> isize{
         if buffer.is_none() || size != core::mem::size_of::<DevicePinValue>() { return 0; }
-        let pin_value = unsafe { &mut *(buffer.unwrap() as *mut DevicePinValue)};
+        let mut binding = buffer.unwrap();
+        let pin_value = binding.to_self_mut::<DevicePinValue>().unwrap();
         pin_value.value = self.ops().pin_read(pin_value.pin);
         size as isize
     }
     fn write(&mut self, _pos:isize, buffer: Option<*const ()>, size:usize) -> isize{
         if buffer.is_none() || size != core::mem::size_of::<DevicePinValue>() { return 0; }
-        let pin_value = unsafe { &*(buffer.unwrap() as *const DevicePinValue)};
+        let binding = buffer.unwrap();
+        let pin_value = binding.to_self::<DevicePinValue>().unwrap();
         self.ops().pin_write(pin_value.pin, pin_value.value);
         size as isize
     }
     fn control(&mut self, _cmd:usize, args: Option<*mut ()>) -> isize{
         if args.is_none(){ return -1;}
-        let pin_mode = unsafe { &mut *(args.unwrap() as *mut DevicePinMode)};
+        let mut binding = args.unwrap();
+        let pin_mode = binding.to_self_mut::<DevicePinMode>().unwrap();
         self.ops().pin_mode(pin_mode.pin, pin_mode.mode);
         0
     }
@@ -85,12 +90,6 @@ impl DevicePinValue {
     pub fn init(pin:usize, value:bool) -> Self{
         DevicePinValue{pin,value}
     }
-    pub fn r#const(&self) -> Option<*const()> {
-        Some(self as *const DevicePinValue as *const())
-    }
-    pub fn r#mut(&mut self) -> Option<*mut()> {
-        Some(self as *mut DevicePinValue as *mut())
-    }
     pub fn set_value(&mut self, value:bool){
         self.value = value;
     }
@@ -99,9 +98,6 @@ impl DevicePinValue {
 impl DevicePinMode {
     pub fn init(pin:usize, mode:u8) -> Self{
         DevicePinMode{pin,mode}
-    }
-    pub fn r#mut(&mut self) -> Option<*mut()> {
-        Some(self as *mut DevicePinMode as *mut())
     }
 }
 

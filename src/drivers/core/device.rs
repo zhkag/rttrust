@@ -1,5 +1,3 @@
-use crate::object::Object;
-
 #[repr(C)]
 #[allow(dead_code)]
 pub enum DeviceClassType
@@ -42,7 +40,6 @@ pub enum DeviceClassType
 #[repr(C)]
 pub struct Device
 {
-    pub(super) parent:Object,
     r#type:DeviceClassType,                     //< device type */
     flag:u16,                     //< device flag */
     open_flag:u16,                //< device open flag */
@@ -80,7 +77,6 @@ impl System {
 impl Device {
     pub fn new() -> Self{
         let derive = Self{
-            parent: Object::new(),
             r#type: DeviceClassType::Unknown,
             flag: 0,
             open_flag:0,

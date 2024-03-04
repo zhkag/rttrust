@@ -4,20 +4,20 @@ use proc_macro::TokenStream;
 use proc_macro2::Span;
 use proc_macro::TokenTree;
 use quote::quote;
-use syn::{parse, parse_macro_input, Ident, ItemFn};
+use syn::{parse, parse_macro_input, Ident, ItemFn, DeriveInput};
 
 #[proc_macro_attribute]
 pub fn init_export(attr: TokenStream, item: TokenStream) -> TokenStream {
     let attr_value: String;
     if attr.clone().into_iter().count() != 1 {
-        return parse::Error::new(Span::call_site(), 
+        return parse::Error::new(Span::call_site(),
             "This property only accepts one parameter").to_compile_error().into();
     }
     if let Some(TokenTree::Literal(lit)) = attr.into_iter().next() {
         attr_value = lit.to_string().trim_matches('"').to_string();
     }
     else {
-        return parse::Error::new(Span::call_site(), 
+        return parse::Error::new(Span::call_site(),
             "Only accept parameters of type Literal").to_compile_error().into();
     }
     let input = parse_macro_input!(item as ItemFn);
@@ -83,4 +83,20 @@ pub fn sh_function_expopt(attr: TokenStream, item: TokenStream) -> TokenStream {
         #input
     };
     TokenStream::from(expanded)
+}
+
+#[proc_macro_derive(To)]
+pub fn to_derive(input: TokenStream) -> TokenStream {
+    let ast = parse_macro_input!(input as DeriveInput);
+    let name = &ast.ident;
+    quote! {
+        impl To for #name {
+            fn to_const(&self) -> Option<*const()> {
+                Some(self as *const #name as *const())
+            }
+            fn to_mut(&mut self) -> Option<*mut()> {
+                Some(self as *mut #name as *mut())
+            }
+        }
+    }.into()
 }
