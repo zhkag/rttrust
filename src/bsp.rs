@@ -3,6 +3,7 @@ use crate::Box;
 pub trait BspTrait {
     fn init(&self);
     fn putc(&mut self,  c: char);
+    fn puts(&mut self,  s: &str);
 }
 
 impl crate::system::System {

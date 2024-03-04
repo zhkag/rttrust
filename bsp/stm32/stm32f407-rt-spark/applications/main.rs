@@ -5,7 +5,7 @@ use kernel::drivers::watchdog::watchdog::DeviceWatchDogCTRL;
 fn idle_hook()
 {
     if let Some(wdt) = crate::system!(device_list_mut()).get_mut("wdt") {
-        wdt.control(DeviceWatchDogCTRL::SetTimeout as usize, Some(&mut 1 as *mut i32 as *mut()));
+        wdt.control(DeviceWatchDogCTRL::SetTimeout as usize, (&mut 1).to_mut());
     }
 }
 
@@ -27,7 +27,7 @@ fn main() -> Result<(),Error>{
     pin_mode(led_red,0);
 
     if let Some(wdt) = system!(device_list_mut()).get_mut("wdt") {
-        wdt.control(DeviceWatchDogCTRL::SetTimeout as usize, Some(&mut 1 as *mut i32 as *mut()));
+        wdt.control(DeviceWatchDogCTRL::SetTimeout as usize, (&mut 1).to_mut());
         wdt.control(DeviceWatchDogCTRL::Start as usize, None);
     }
     system!(idle_sethook(idle_hook));

@@ -1,6 +1,6 @@
 use crate::drivers::core::device::{Device, DeviceOps, DeviceClassType};
 use crate::drivers::DeviceRegister;
-
+use crate::to::To;
 use crate::Box;
 use crate::system;
 #[repr(C)]
@@ -66,9 +66,23 @@ impl DeviceOps for DeviceUart {
         size as isize
     }
     fn write(&mut self, _pos:isize, buffer: Option<*const ()>, size:usize) -> isize{
-        if buffer.is_none() || size != core::mem::size_of::<char>() { return 0; }
-        let pin_value = unsafe { &mut *(buffer.unwrap() as *mut char)};
-        self.ops().putc(*pin_value);
+        if buffer.is_none(){ return 0; }
+        match size {
+            1 => {
+                let binding = buffer.unwrap();
+                let c = binding.to_self::<char>().unwrap();
+                self.ops().putc(*c);
+            },
+            _ => {
+                let s: &str = unsafe {
+                    let ptr_u8: *const u8 = core::mem::transmute(buffer.unwrap());
+                    core::str::from_utf8(core::slice::from_raw_parts(ptr_u8, size)).unwrap()
+                };
+                for c in s.chars(){
+                    self.ops().putc(c);
+                }
+            },
+        }
         size as isize
     }
     fn control(&mut self, _cmd:usize, _args: Option<*mut ()>) -> isize{

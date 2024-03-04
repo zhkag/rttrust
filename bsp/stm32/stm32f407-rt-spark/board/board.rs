@@ -278,7 +278,15 @@ impl BspTrait for Board<'_> {
     }
     fn putc(&mut self,  c: char) {
         if let Some(pin) = self.console_device.as_mut(){
-            pin.write(1, Some(&c as *const char as *const()), 4);
+            pin.write(0, Some(&c as *const char as *const()), 1);
+        }
+        else{
+            self.console_device = kernel::system!(device_list_mut()).get_mut("uart1");
+        }
+    }
+    fn puts(&mut self,  s: &str){
+        if let Some(pin) = self.console_device.as_mut(){
+            pin.write(0, Some(s as *const str as *const()), s.len());
         }
         else{
             self.console_device = kernel::system!(device_list_mut()).get_mut("uart1");
