@@ -33,14 +33,14 @@ fn test(_parameter:*mut ()) -> Result<(),Error>{
         pin.control(0, mode.to_mut());
     }
 
-    let mut value = DevicePinValue::init(led_yellow, true);
+    let mut value = DevicePinValue::init(led_yellow, PinState::HIGH);
     loop {
         if let Some(ref mut pin) = pin_opt {
-            value.set_value(true);
+            value.set_value(PinState::HIGH);
             pin.write(0,value.to_const() ,core::mem::size_of::<DevicePinValue>());
             kernel::thread_sleep!(100)?;
 
-            value.set_value(false);
+            value.set_value(PinState::LOW);
             pin.write(0,value.to_const() ,core::mem::size_of::<DevicePinValue>());
             kernel::thread_sleep!(100)?;
         }

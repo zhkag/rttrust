@@ -1,11 +1,37 @@
 use crate::drivers::core::device::{Device, DeviceRegister, DeviceOps, DeviceClassType, DeviceSelf};
 use crate::Box;
 use crate::system;
+
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub enum PinState {
+    LOW,
+    HIGH
+}
+
+impl From<PinState> for bool {
+    fn from(value: PinState) -> bool {
+        match value {
+            PinState::LOW => false,
+            PinState::HIGH => true,
+        }
+    }
+}
+
+impl From<bool> for PinState {
+    fn from(value: bool) -> PinState {
+        match value {
+            false => PinState::LOW,
+            true => PinState::HIGH,
+        }
+    }
+}
+
 pub trait PinOps
 {
     fn pin_mode(&mut self,  _pin: usize, _mode: u8);
-    fn pin_write(&mut self,  _pin: usize, _value: bool);
-    fn pin_read(&mut self,  _pin: usize) -> bool;
+    fn pin_write(&mut self,  _pin: usize, _value: PinState);
+    fn pin_read(&mut self,  _pin: usize) -> PinState;
     fn pin_detach_irq(&mut self,  _pin: usize);
     fn pin_irq_enable(&mut self,  _pin: usize, _enabled: u8);
     fn pin_get(&mut self, _name:&str) -> usize;
@@ -23,7 +49,7 @@ use crate::To;
 pub struct DevicePinValue
 {
     pin:usize,
-    value:bool,
+    value:PinState,
 }
 
 #[derive(To)]
@@ -87,10 +113,10 @@ impl DeviceOps for DevicePin {
 }
 
 impl DevicePinValue {
-    pub fn init(pin:usize, value:bool) -> Self{
+    pub fn init(pin:usize, value:PinState) -> Self{
         DevicePinValue{pin,value}
     }
-    pub fn set_value(&mut self, value:bool){
+    pub fn set_value(&mut self, value:PinState){
         self.value = value;
     }
 }
@@ -116,17 +142,17 @@ pub fn pin_mode(pin: usize, mode: u8){
     }
 }
 
-pub fn pin_write(pin: usize, value: bool){
+pub fn pin_write(pin: usize, value: PinState){
     let pin_self = system!(device_list_mut()).get_mut("pin").unwrap().device_self().unwrap();
     if let DeviceSelf::Pin(device_pin) = pin_self {
         device_pin.ops().pin_write(pin, value);
     }
 }
 
-pub fn pin_read(pin: usize) -> bool{
+pub fn pin_read(pin: usize) -> PinState{
     let pin_self = system!(device_list_mut()).get_mut("pin").unwrap().device_self().unwrap();
     if let DeviceSelf::Pin(device_pin) = pin_self {
         return device_pin.ops().pin_read(pin)
     }
-    false
+    PinState::LOW
 }

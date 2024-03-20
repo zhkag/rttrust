@@ -1,5 +1,5 @@
 use components::pin::{PinOps,DevicePin};
-
+use crate::PinState;
 use kernel::println;
 use crate::board::board::AHB1PERIPH_BASE;
 const GPIOA_BASE: u32 = AHB1PERIPH_BASE;
@@ -43,9 +43,9 @@ impl GPIOTypeDef{
         }
     }
 
-    pub fn pin_set(&mut self, pinx:u32, status:bool)
+    pub fn pin_set(&mut self, pinx:u32, status:PinState)
     {
-        if status {
+        if status.into() {
             self.bsrr |= pinx;
         }
         else {
@@ -113,18 +113,18 @@ impl PinOps for StmPin {
         }
         gpio_port.set(gpio_pin as u16, mode, otype, ospeed, pupd);
     }
-    fn pin_write(&mut self,  pin: usize, value: bool){
+    fn pin_write(&mut self,  pin: usize, value: PinState){
         let gpio_port = Self::st_port(pin);
         let gpio_pin = Self::st_pin(pin) as u32;
         gpio_port.pin_set(gpio_pin, value);
     }
-    fn pin_read(&mut self,  pin: usize) -> bool{
+    fn pin_read(&mut self,  pin: usize) -> PinState{
         let gpio_port = Self::st_port(pin);
         let gpio_pin = Self::st_pin(pin) as u32;
         if gpio_port.idr & gpio_pin > 0 {
-            return true;
+            return PinState::HIGH;
         }else{
-            return false;
+            return PinState::LOW;
         }
     }
     fn pin_detach_irq(&mut self,  _pin: usize){

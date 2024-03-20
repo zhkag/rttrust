@@ -24,9 +24,9 @@ fn main() -> Result<(),Error>{
     pin_mode(led_red,0);
 
     loop {
-        pin_write(led_red, true);
+        pin_write(led_red, PinState::HIGH);
         kernel::thread_sleep!(500)?;
-        pin_write(led_red, false);
+        pin_write(led_red, PinState::LOW);
         kernel::thread_sleep!(500)?;
     }
 }
