@@ -2,11 +2,9 @@ use crate::Box;
 
 pub trait BspTrait {
     fn init(&self);
-    fn putc(&mut self,  c: char);
-    fn puts(&mut self,  s: &str);
 }
 
-impl crate::system::System {
+impl crate::system::System<'_> {
     pub fn bsp(&mut self) -> Option<&mut Box<dyn BspTrait>>{
         self.bsp.as_mut()
     }

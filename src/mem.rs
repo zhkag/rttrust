@@ -73,16 +73,16 @@ impl SmallMem {
         small_mem.total = mem_size;
         small_mem.mem_size_aligned = mem_size;
         small_mem.heap_ptr = begin_align as *mut u8;
-        
+
         let mem = unsafe {&mut *(small_mem.heap_ptr as *const usize as *mut SmallMemItem)};
-        
+
         mem.pool_ptr = MEM_FREED!(small_mem);
         mem.next  = small_mem.mem_size_aligned + SIZEOF_STRUCT_MEM!();
         mem.prev  = 0;
-        
+
         small_mem.heap_end = small_mem.heap_ptr.wrapping_add(mem.next) as *mut SmallMemItem;
         let heap_end = unsafe {&mut *small_mem.heap_end};
-        
+
         heap_end.pool_ptr = MEM_USED!(small_mem);
         heap_end.next  = mem.next;
         heap_end.prev  = mem.next;
@@ -97,7 +97,7 @@ impl SmallMem {
         while ptr <= self.mem_size_aligned - size {
             let mem = unsafe { &mut *(self.heap_ptr.wrapping_add(ptr) as *mut SmallMemItem)};
             if !MEM_ISUSED!(mem) &&  (mem.next - (ptr + SIZEOF_STRUCT_MEM!())) >= size{
-                
+
                 if mem.next - (ptr + SIZEOF_STRUCT_MEM!()) >= (size + SIZEOF_STRUCT_MEM!() + MIN_SIZE_ALIGNED!())
                 {
                     let ptr2 = ptr + SIZEOF_STRUCT_MEM!() + size;
@@ -106,7 +106,7 @@ impl SmallMem {
                     mem2.next = mem.next;
                     mem2.prev = ptr;
 
-                    
+
                     mem.next = ptr2;
 
                     if mem2.next != self.mem_size_aligned + SIZEOF_STRUCT_MEM!()
@@ -174,7 +174,7 @@ impl SmallMem {
     }
 
     fn plug_holes(&mut self, mem: &mut SmallMemItem) {
-        
+
         let nmem = unsafe { &mut *(self.heap_ptr.wrapping_add(mem.next) as *mut SmallMemItem)};
         if mem as *mut SmallMemItem != nmem as *mut SmallMemItem && !MEM_ISUSED!(nmem) && nmem as *mut SmallMemItem != self.heap_end
         {
@@ -186,7 +186,7 @@ impl SmallMem {
             mem.next = nmem.next;
             unsafe { &mut *(self.heap_ptr.wrapping_add(nmem.next) as *mut SmallMemItem)}.prev = mem as *mut SmallMemItem as usize - self.heap_ptr as usize;
         }
-        
+
         let pmem = unsafe { &mut *(self.heap_ptr.wrapping_add(mem.prev) as *mut SmallMemItem)};
         if pmem as *mut SmallMemItem != mem as *mut SmallMemItem && !MEM_ISUSED!(pmem)
         {

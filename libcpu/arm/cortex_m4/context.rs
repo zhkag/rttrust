@@ -20,7 +20,7 @@ unsafe extern "C" fn pend_sv_handler() {
     asm!("CPSID I");
     asm!("LDR   r0, ={}",sym cpuport::RT_THREAD_SWITCH_INTERRUPT_FLAG);
     asm!("LDR   r1, [r0]");
-    asm!("CBZ   r1, 1f");      
+    asm!("CBZ   r1, 1f");
     asm!("MOV   r1, #0x00");
     asm!("STR   r1, [r0]");
     asm!("LDR   r0, ={}",sym cpuport::RT_INTERRUPT_FROM_THREAD);
@@ -30,7 +30,7 @@ unsafe extern "C" fn pend_sv_handler() {
     asm!("TST   lr, #0x10");
     asm!("IT    EQ", "VSTMDBEQ r1!, {{d8 - d15}}");
     asm!("STMFD r1!, {{r4 - r11}}");
-    asm!("MOV   r4, #0x00");  
+    asm!("MOV   r4, #0x00");
     asm!("TST   lr, #0x10");
     asm!("IT    EQ", "MOVEQ   r4, #0x01");
     asm!("STMFD r1!, {{r4}}");

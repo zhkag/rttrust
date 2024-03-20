@@ -63,6 +63,15 @@ impl DeviceOps for DeviceUart {
         "uart1"
     }
     fn read(&mut self, _pos:isize, _buffer: Option<*mut ()>, size:usize) -> isize{
+        // if buffer.is_none(){ return 0; }
+        // match size {
+        //     1 => {
+        //         let mut binding = buffer.unwrap();
+        //         let c = binding.to_self_mut::<char>().unwrap();
+        //         *c = self.ops().getc() as char;
+        //     },
+        //     _ => {},
+        // }
         size as isize
     }
     fn write(&mut self, _pos:isize, buffer: Option<*const ()>, size:usize) -> isize{

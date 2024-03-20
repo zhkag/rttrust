@@ -58,12 +58,13 @@ enum SuspendWithFlag
     UNINTERRUPTIBLE,
 }
 
+#[repr(C)]
 #[derive(PartialEq)]
 #[derive(Copy, Clone)]
 pub struct Thread
 {
-    pub(super) parent:Object,
     sp: *mut (),
+    pub(super) parent:Object,
     entry:fn(*mut ())-> Result<(),Error>,
     parameter: *mut (),
     stack_addr: *mut (),
@@ -82,7 +83,7 @@ pub struct Thread
 
 
 impl Thread {
-    fn new(entry: fn(*mut ()) -> Result<(),Error>, parameter:*mut (), stack_start:*mut (), 
+    fn new(entry: fn(*mut ()) -> Result<(),Error>, parameter:*mut (), stack_start:*mut (),
            stack_size:u32, priority:u8, tick:u8) -> Self {
         let thread = Self {
             parent:Object::new(),
@@ -206,7 +207,7 @@ impl Thread {
     pub fn number_mask(&self) ->u32 {
         self.number_mask
     }
-    
+
     fn resume(&mut self){
         if (self.stat & Status::SuspendMask as u8) != Status::SuspendMask as u8{
             return;
@@ -228,7 +229,7 @@ impl Thread {
     pub fn set_stat(&mut self, stat:u8) {
         self.stat = stat;
     }
-    
+
     pub fn tick_decrease(&mut self) -> u8 {
         self.remaining_tick -= 1;
         if self.remaining_tick == 0 {

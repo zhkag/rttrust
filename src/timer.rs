@@ -51,7 +51,7 @@ impl Timer {
     }
 }
 
-impl System {
+impl System<'_> {
     pub fn list_to_timer(&self, list: *mut List<Timer>) -> &mut Timer {
         #[allow(deref_nullptr)]
         unsafe { &mut *((list as usize - (&(&*(0 as *const Timer)).list) as *const List<Timer> as usize) as *mut Timer) }

@@ -34,3 +34,12 @@ impl To for i32{
         Some(self as *mut i32 as *mut())
     }
 }
+
+impl To for char{
+    fn to_const(&self) -> Option<*const()> {
+        Some(self as *const char as *const())
+    }
+    fn to_mut(&mut self) -> Option<*mut()> {
+        Some(self as *mut char as *mut())
+    }
+}

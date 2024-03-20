@@ -16,10 +16,11 @@ impl UartOps for StmUart<'_> {
         self.uart.putc(c);
     }
     fn getc(&mut self) -> u8{
-        if let Some(c) =  self.uart.getc(){
-            return c as u8;
+        let mut c = self.uart.getc();
+        while c.is_none() {
+            c = self.uart.getc()
         }
-        0
+        return c.unwrap() as u8;
     }
 }
 

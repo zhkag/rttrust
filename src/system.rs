@@ -1,5 +1,5 @@
 use crate::object::{ObjectInformation,ObjectClassType,ObjectInfoType};
-use crate::Error;
+use crate::{Error, To};
 use crate::scheduler::Scheduler;
 use crate::bsp::BspTrait;
 use crate::thread::Thread;
@@ -29,7 +29,7 @@ const MAIN_THREAD_STACK_SIZE: usize = 10240;
 static mut MAIN_THREAD_STACK: [u8; MAIN_THREAD_STACK_SIZE] = [0; MAIN_THREAD_STACK_SIZE];
 static mut MAIN_THREAD: Option<Thread> = None;
 
-pub struct System{
+pub struct System<'a>{
     scheduler:Option<Scheduler>,
     tick:Tick,
     timer_list:heaplist::List<Timer>,
@@ -40,9 +40,10 @@ pub struct System{
     pub device_list:BTreeMap<String,Box<dyn DeviceOps>>,
     pub idle_hook_list:Vec<fn()>,
     heap: Option<&'static mut SmallMem>,
+    console_device: Option<&'a mut Box<dyn DeviceOps>>,
 }
 
-impl System {
+impl System<'_> {
     pub fn global_mut() -> &'static mut Self{
         unsafe {
             if SYSTREM.is_none(){
@@ -64,6 +65,7 @@ impl System {
             device_list:BTreeMap::new(),
             idle_hook_list:Vec::new(),
             heap:None,
+            console_device:None,
         };
         systerm
     }
@@ -122,6 +124,39 @@ impl System {
     pub fn heap(&'static mut self) -> &'static mut SmallMem{
         self.heap.as_mut().unwrap()
     }
+    pub fn set_console<'a>(&mut self,console:&str){
+        self.console_device = crate::system!(device_list_mut()).get_mut(console);
+    }
+    pub fn set_console_device<'a>(&mut self,console:Option<&'static mut Box<dyn DeviceOps>>){
+        self.console_device = console;
+    }
+    pub fn putc(&mut self,  c: char){
+        if self.console_device.is_none() {
+            self.set_console("uart1");
+        }
+        if let Some(pin) = self.console_device.as_mut(){
+            pin.write(0, (&c).to_const(), 1);
+        }
+    }
+    pub fn puts(&mut self,  s: &str){
+        if self.console_device.is_none() {
+            self.set_console_device(crate::system!(device_list_mut()).get_mut("uart1"));
+        }
+        if let Some(pin) = self.console_device.as_mut(){
+            pin.write(0, s.to_const(), s.len());
+        }
+    }
+    pub fn getc(&mut self) -> u8{
+        if self.console_device.is_none() {
+            self.set_console("uart1");
+        }
+        let mut c:char = ' ';
+        if let Some(pin) = self.console_device.as_mut(){
+            pin.read(0, (&mut c).to_mut(), 1);
+        }
+        return c as u8;
+    }
+
 }
 
 #[macro_export]

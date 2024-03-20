@@ -39,7 +39,7 @@ impl Scheduler {
         if let Some(thread) = self.last_thread {
             self.last_thread = None;
             if thread.timer_run(){
-                self.thread_timer_list.insert_with_cmp(thread, |a, b| 
+                self.thread_timer_list.insert_with_cmp(thread, |a, b|
                     a.timeout_tick() < b.timeout_tick());
             }
             else {
@@ -56,11 +56,11 @@ impl Scheduler {
         let libcpu = system!().libcpu();
         let level = libcpu.interrupt_disable();
         let mut highest_ready_priority = 0;
-        
+
         let binding = self.get_highest_priority_thread(&mut highest_ready_priority);
         let next_thread = binding.unwrap();
         let mut prev_thread = thread_self!().unwrap();
-        
+
         let mut to_thread = next_thread.clone();
 
         if (prev_thread.stat() & Status::StatMask as u8) == Status::Running as u8 {
@@ -71,7 +71,7 @@ impl Scheduler {
                 to_thread = prev_thread;
             }
         }
-        
+
         if to_thread != thread_self!().unwrap()
         {
             if (prev_thread.stat() & Status::STAT_YIELD_MASK as u8) != 0{
@@ -81,7 +81,7 @@ impl Scheduler {
             self.set_last_thread(prev_thread);
             let to_thread_mut =  thread_self_mut!().unwrap();
             to_thread_mut.set_stat(Status::Running as u8 | (to_thread_mut.stat() & !(Status::StatMask as u8)));
-            
+
             let from_thread_mut =  self.last_thread_mut().unwrap();
 
             let from_sp = (from_thread_mut.sp_mut()) as *mut *mut () as *mut ();
@@ -96,6 +96,7 @@ impl Scheduler {
             }
         }
         else {
+            self.ready_priority_group |= next_thread.number_mask() as usize;
             self.priority_table_heap[next_thread.current_priority() as usize].as_mut().unwrap().push_back(next_thread);
             prev_thread.set_stat(Status::Running as u8 | (prev_thread.stat() & !(Status::StatMask as u8)));
             self.set_current_thread(prev_thread);
@@ -103,7 +104,7 @@ impl Scheduler {
         libcpu.interrupt_enable(level);
     }
 
-    
+
     pub fn insert_thread(&mut self,mut thread: Thread){
         self.solve_last_thread();
         let libcpu = system!().libcpu();

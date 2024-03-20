@@ -9,9 +9,9 @@ static mut IDLE_THREAD:Option<Thread> = None;
 
 fn idle_fun(_parameter: *mut ()) -> Result<(),Error>{
     loop {
-        for hook in crate::system!(idle_hook_list_mut()).iter() {
-            hook()
-        }
+        // for hook in crate::system!(idle_hook_list_mut()).iter() {
+        //     hook()
+        // }
     }
 }
 
@@ -24,7 +24,8 @@ pub fn rt_thread_idle_init(){
     idle_thread.startup();
 }
 
-impl System {
+impl System<'_> {
+    #[allow(dead_code)]
     fn idle_hook_list_mut(&mut self) -> &mut Vec<fn()>{
         &mut self.idle_hook_list
     }

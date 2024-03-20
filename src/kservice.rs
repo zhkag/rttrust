@@ -7,10 +7,7 @@ pub struct UsartWriter {
 
 impl core::fmt::Write for UsartWriter {
     fn write_str(&mut self, s: &str) -> core::fmt::Result {
-        let system = system!();
-        if let Some(bsp) = system.bsp() {
-            bsp.puts(s);
-        }
+        system!(puts(s));
         Ok(())
     }
 }

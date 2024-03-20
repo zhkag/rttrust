@@ -146,7 +146,7 @@ impl ObjectInformation {
     }
 }
 
-impl System {
+impl System<'_> {
     fn install_object(&mut self, r#type:ObjectClassType, list:&mut List<Object>){
         let libcpu = system!().libcpu();
         let level = libcpu.interrupt_disable();

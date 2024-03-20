@@ -21,7 +21,7 @@ pub trait LibcpuTrait {
     fn stack_init(&self, _entry: fn(*mut ()) -> Result<(),Error>, _parameter:*mut (),_stack_addr:*mut (),_exit: fn(_err:Result<(),Error>)) -> *mut (){unreachable!();}
 }
 
-impl System {
+impl System<'_> {
     pub fn libcpu(&mut self) -> &mut Box<dyn LibcpuTrait>{
         self.libcpu.as_mut().unwrap()
     }

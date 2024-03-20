@@ -65,7 +65,7 @@ pub trait DeviceOps {
     fn control(&mut self, _cmd:usize, _args: Option<*mut ()>) -> isize { 0 }
 }
 
-impl System {
+impl System<'_> {
     pub fn device_list_mut(&mut self) -> &mut crate::BTreeMap<alloc::string::String, Box<dyn DeviceOps>>{
         &mut self.device_list
     }

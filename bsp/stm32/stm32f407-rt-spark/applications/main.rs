@@ -1,13 +1,10 @@
 use crate::{*};
 use components::pin::*;
-use kernel::drivers::watchdog::watchdog::DeviceWatchDogCTRL;
+#[export_name = "HardFault_Handler"]
+unsafe extern "C" fn hard_fault_handler() {
 
-fn idle_hook()
-{
-    if let Some(wdt) = crate::system!(device_list_mut()).get_mut("wdt") {
-        wdt.control(DeviceWatchDogCTRL::SetTimeout as usize, (&mut 1).to_mut());
-    }
 }
+
 
 #[no_mangle]
 fn main() -> Result<(),Error>{
@@ -26,11 +23,6 @@ fn main() -> Result<(),Error>{
     let led_red = pin_get("PF.12");
     pin_mode(led_red,0);
 
-    if let Some(wdt) = system!(device_list_mut()).get_mut("wdt") {
-        wdt.control(DeviceWatchDogCTRL::SetTimeout as usize, (&mut 1).to_mut());
-        wdt.control(DeviceWatchDogCTRL::Start as usize, None);
-    }
-    system!(idle_sethook(idle_hook));
     loop {
         pin_write(led_red, true);
         kernel::thread_sleep!(500)?;
