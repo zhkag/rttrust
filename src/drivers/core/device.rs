@@ -40,6 +40,7 @@ pub enum DeviceClassType
 #[repr(C)]
 pub struct Device
 {
+    name:String,
     r#type:DeviceClassType,                     //< device type */
     flag:u16,                     //< device flag */
     open_flag:u16,                //< device open flag */
@@ -48,13 +49,14 @@ pub struct Device
     user_data: *mut (),                //< device private data */
 }
 
+use crate::Any;
 use crate::Box;
 use crate::system::System;
-use alloc::string::ToString;
+use alloc::string::{String, ToString};
 
 pub trait DeviceOps {
     fn name(&self) -> &str {""}
-    fn device_self(&mut self) -> Option<DeviceSelf> {None}
+    fn as_any(&mut self) -> &mut dyn Any;
     fn rx_indicate(&mut self, _size:usize) -> isize { 0 }
     fn tx_complete(&mut self, _buffer: *mut ()) -> isize { 0 }
     fn init(&mut self) -> isize { 0 }
@@ -77,6 +79,7 @@ impl System<'_> {
 impl Device {
     pub fn new() -> Self{
         let derive = Self{
+            name:"".to_string(),
             r#type: DeviceClassType::Unknown,
             flag: 0,
             open_flag:0,
@@ -86,18 +89,15 @@ impl Device {
         };
         derive
     }
-    pub fn init(&mut self, r#type: DeviceClassType){
+    pub fn init(&mut self, name:&str, r#type: DeviceClassType){
         self.r#type = r#type;
+        self.name = name.to_string();
+    }
+    pub fn name(&self) -> &str{
+        &self.name
     }
 }
 
 pub trait DeviceRegister<T> {
     fn register(&mut self, name:&str, ops:T);
-}
-
-use crate::drivers::pin::DevicePin;
-use crate::drivers::serial::uart::DeviceUart;
-pub enum DeviceSelf<'a> {
-    Pin(&'a mut DevicePin),
-    Uart(&'a mut DeviceUart),
 }

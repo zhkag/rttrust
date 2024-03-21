@@ -14,7 +14,6 @@ use kernel::thread;
 use kernel::timer;
 use kernel::Error;
 
-use kernel::drivers::core::device::DeviceSelf;
 use components::pin::{*};
 use kernel::To;
 
@@ -26,7 +25,7 @@ fn test(_parameter:*mut ()) -> Result<(),Error>{
     let mut led_yellow = 0;
     let mut pin_opt = system!(device_list_mut()).get_mut("pin");
     if let Some(ref mut pin) = pin_opt {
-        if let DeviceSelf::Pin(pin) = pin.device_self().unwrap() {
+        if let Some(pin) = pin.as_any().downcast_mut::<DevicePin>() {
             led_yellow = pin.ops().pin_get("PF.11");
         }
         let mut mode = DevicePinMode::init(led_yellow, 0);

@@ -32,6 +32,7 @@ pub use drivers::core::device::DeviceOps;
 pub use to::To;
 pub extern crate macros;
 pub use macros::To;
+pub use core::any::Any;
 
 pub use components::entry;
 use core::panic::PanicInfo;

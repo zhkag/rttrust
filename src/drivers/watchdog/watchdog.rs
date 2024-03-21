@@ -5,7 +5,7 @@ use crate::system;
 
 #[repr(C)]
 pub enum DeviceWatchDogCTRL
-{   
+{
     Start = 0,
     Stop,
     GetTimeout,
@@ -38,19 +38,23 @@ impl DeviceWatchDog {
 }
 
 impl<T: WatchDogOps + 'static> DeviceRegister<T> for DeviceWatchDog {
-    fn register(&mut self, _name:&str, ops:T)
+    fn register(&mut self, name:&str, ops:T)
     {
         let mut hw_wdt = Some(DeviceWatchDog::new());
         let hw_wdt_mut = hw_wdt.as_mut().unwrap();
         hw_wdt_mut.ops = Some(Box::new(ops));
-        hw_wdt_mut.parent.init(DeviceClassType::WDT);
+        hw_wdt_mut.parent.init(name, DeviceClassType::WDT);
         system!(device_register(hw_wdt.unwrap()));
     }
 }
+use crate::Any;
 
 impl DeviceOps for DeviceWatchDog {
     fn name(&self) -> &str {
-        "wdt"
+        self.parent.name()
+    }
+    fn as_any(&mut self) -> &mut dyn Any {
+        self
     }
     fn init(&mut self) -> isize{
         self.ops().init();

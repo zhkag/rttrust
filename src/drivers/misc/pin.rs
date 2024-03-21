@@ -1,4 +1,4 @@
-use crate::drivers::core::device::{Device, DeviceRegister, DeviceOps, DeviceClassType, DeviceSelf};
+use crate::drivers::core::device::{Device, DeviceRegister, DeviceOps, DeviceClassType};
 use crate::Box;
 use crate::system;
 
@@ -72,22 +72,22 @@ impl DevicePin {
 }
 
 impl<T: PinOps + 'static> DeviceRegister<T> for DevicePin {
-    fn register(&mut self, _name:&str, ops:T)
+    fn register(&mut self, name:&str, ops:T)
     {
         let mut hw_pin = Some(DevicePin::new());
         let _hw_pin_mut = hw_pin.as_mut().unwrap();
         _hw_pin_mut.ops = Some(Box::new(ops));
-        _hw_pin_mut.parent.init(DeviceClassType::Pin);
+        _hw_pin_mut.parent.init(name, DeviceClassType::Pin);
         system!(device_register(hw_pin.unwrap()));
     }
 }
-
+use crate::Any;
 impl DeviceOps for DevicePin {
     fn name(&self) -> &str {
-        "pin"
+        self.parent.name()
     }
-    fn device_self(&mut self) -> Option<DeviceSelf> {
-        Some(DeviceSelf::Pin(self))
+    fn as_any(&mut self) -> &mut dyn Any {
+        self
     }
     fn read(&mut self, _pos:isize, buffer: Option<*mut ()>, size:usize) -> isize{
         if buffer.is_none() || size != core::mem::size_of::<DevicePinValue>() { return 0; }
@@ -128,30 +128,26 @@ impl DevicePinMode {
 }
 
 pub fn pin_get(name:&str) -> usize{
-    let pin_self = system!(device_list_mut()).get_mut("pin").unwrap().device_self().unwrap();
-    if let DeviceSelf::Pin(device_pin) = pin_self {
+    if let Some(device_pin) = system!(device_list_mut()).get_mut("pin").unwrap().as_any().downcast_mut::<DevicePin>() {
         return device_pin.ops().pin_get(name)
     }
     0
 }
 
 pub fn pin_mode(pin: usize, mode: u8){
-    let pin_self = system!(device_list_mut()).get_mut("pin").unwrap().device_self().unwrap();
-    if let DeviceSelf::Pin(device_pin) = pin_self {
+    if let Some(device_pin) = system!(device_list_mut()).get_mut("pin").unwrap().as_any().downcast_mut::<DevicePin>() {
         device_pin.ops().pin_mode(pin, mode);
     }
 }
 
 pub fn pin_write(pin: usize, value: PinState){
-    let pin_self = system!(device_list_mut()).get_mut("pin").unwrap().device_self().unwrap();
-    if let DeviceSelf::Pin(device_pin) = pin_self {
+    if let Some(device_pin) = system!(device_list_mut()).get_mut("pin").unwrap().as_any().downcast_mut::<DevicePin>() {
         device_pin.ops().pin_write(pin, value);
     }
 }
 
 pub fn pin_read(pin: usize) -> PinState{
-    let pin_self = system!(device_list_mut()).get_mut("pin").unwrap().device_self().unwrap();
-    if let DeviceSelf::Pin(device_pin) = pin_self {
+    if let Some(device_pin) = system!(device_list_mut()).get_mut("pin").unwrap().as_any().downcast_mut::<DevicePin>() {
         return device_pin.ops().pin_read(pin)
     }
     PinState::LOW

@@ -48,19 +48,22 @@ impl DeviceUart {
 }
 
 impl<T: UartOps + 'static> DeviceRegister<T> for DeviceUart {
-    fn register(&mut self, _name:&str, ops:T)
+    fn register(&mut self, name:&str, ops:T)
     {
         let mut hw_uart = Some(DeviceUart::new());
         let hw_uart_mut = hw_uart.as_mut().unwrap();
         hw_uart_mut.ops = Some(Box::new(ops));
-        hw_uart_mut.parent.init(DeviceClassType::Char);
+        hw_uart_mut.parent.init(name, DeviceClassType::Char);
         system!(device_register(hw_uart.unwrap()));
     }
 }
-
+use crate::Any;
 impl DeviceOps for DeviceUart {
     fn name(&self) -> &str {
-        "uart1"
+        self.parent.name()
+    }
+    fn as_any(&mut self) -> &mut dyn Any {
+        self
     }
     fn read(&mut self, _pos:isize, _buffer: Option<*mut ()>, size:usize) -> isize{
         // if buffer.is_none(){ return 0; }
