@@ -24,7 +24,7 @@ pub fn rt_thread_idle_init(){
     idle_thread.startup();
 }
 
-impl System<'_> {
+impl System {
     #[allow(dead_code)]
     fn idle_hook_list_mut(&mut self) -> &mut Vec<fn()>{
         &mut self.idle_hook_list

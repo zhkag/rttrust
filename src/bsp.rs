@@ -4,7 +4,7 @@ pub trait BspTrait {
     fn init(&self);
 }
 
-impl crate::system::System<'_> {
+impl crate::system::System {
     pub fn bsp(&mut self) -> Option<&mut Box<dyn BspTrait>>{
         self.bsp.as_mut()
     }
