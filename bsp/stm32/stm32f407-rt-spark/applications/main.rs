@@ -21,7 +21,7 @@ fn main() -> Result<(),Error>{
     test_thread.startup();
 
     let led_red = pin_get("PF.12");
-    pin_mode(led_red,0);
+    pin_mode(led_red,PinMode::OUTPUT);
 
     loop {
         pin_write(led_red, PinState::HIGH);

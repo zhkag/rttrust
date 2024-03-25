@@ -10,6 +10,19 @@ pub enum DeviceWatchDogCTRL
     Stop,
     GetTimeout,
     SetTimeout,
+    Unknown,
+}
+
+impl From<usize> for DeviceWatchDogCTRL {
+    fn from(value: usize) -> DeviceWatchDogCTRL {
+        match value {
+            0 => DeviceWatchDogCTRL::Start,
+            1 => DeviceWatchDogCTRL::Stop,
+            2 => DeviceWatchDogCTRL::GetTimeout,
+            3 => DeviceWatchDogCTRL::SetTimeout,
+            _ => DeviceWatchDogCTRL::Unknown,
+        }
+    }
 }
 
 pub trait WatchDogOps
@@ -69,14 +82,14 @@ impl DeviceOps for DeviceWatchDog {
         0 as isize
     }
     fn control(&mut self, cmd:usize, args: Option<*mut ()>) -> isize{
-        if DeviceWatchDogCTRL::Start as usize == cmd{
-            self.ops().control(DeviceWatchDogCTRL::Start, None);
-        }else if DeviceWatchDogCTRL::Stop as usize == cmd {
-            self.ops().control(DeviceWatchDogCTRL::Stop, None);
-        }else if DeviceWatchDogCTRL::SetTimeout as usize == cmd {
-            self.ops().control(DeviceWatchDogCTRL::SetTimeout, args);
-        }else if DeviceWatchDogCTRL::GetTimeout as usize == cmd {
-            self.ops().control(DeviceWatchDogCTRL::GetTimeout, args);
+        match cmd.into() {
+            DeviceWatchDogCTRL::Start | DeviceWatchDogCTRL::Stop => {
+                self.ops().control(cmd.into(), None);
+            },
+            DeviceWatchDogCTRL::SetTimeout | DeviceWatchDogCTRL::GetTimeout => {
+                self.ops().control(cmd.into(), args);
+            },
+            _=>{}
         }
         0
     }

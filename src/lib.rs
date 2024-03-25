@@ -13,7 +13,7 @@ pub mod kservice;
 pub mod drivers;
 mod libcpu;
 mod irq;
-mod include;
+pub mod include;
 mod components;
 mod to;
 mod mem;

@@ -48,7 +48,7 @@ impl WatchDogOps for StmWdg<'_> {
 
 use kernel::macros::init_export;
 #[init_export("2")]
-fn device_pin() {
+fn device_wdt() {
     let stm_wdg = StmWdg{wdt:IWDGTypeDef::new()};
     DeviceWatchDog::new().register("wdt",stm_wdg);
 }

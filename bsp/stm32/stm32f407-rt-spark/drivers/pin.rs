@@ -1,5 +1,6 @@
 use components::pin::{PinOps,DevicePin};
 use crate::PinState;
+use crate::PinMode;
 use kernel::println;
 use crate::board::board::AHB1PERIPH_BASE;
 const GPIOA_BASE: u32 = AHB1PERIPH_BASE;
@@ -96,20 +97,19 @@ impl StmPin{
 }
 
 impl PinOps for StmPin {
-    fn pin_mode(&mut self,  pin: usize, _mode: u8){
+    fn pin_mode(&mut self,  pin: usize, pin_mode: PinMode){
         let gpio_port = Self::st_port(pin);
         let gpio_pin = Self::st_pin(pin) as u32;
-        let mut mode:u32 = 1;
+        let mode:u32;
         let mut otype:u32 = 0;
         let ospeed:u32 = 3;
-        let mut pupd:u32 = 0;
-        match _mode {
-            0 => {mode = 1; otype = 0; pupd = 0;},
-            1 => {mode = 0; pupd = 0;},
-            2 => {mode = 0; pupd = 1;},
-            3 => {mode = 0; pupd = 2;},
-            4 => {mode = 1; otype = 1; pupd = 0;},
-            _ => {},
+        let pupd:u32;
+        match pin_mode {
+            PinMode::OUTPUT => {mode = 1; otype = 0; pupd = 0;},
+            PinMode::INPUT => {mode = 0; pupd = 0;},
+            PinMode::InputPullup => {mode = 0; pupd = 1;},
+            PinMode::InputPulldown => {mode = 0; pupd = 2;},
+            PinMode::OutputOd => {mode = 1; otype = 1; pupd = 0;},
         }
         gpio_port.set(gpio_pin as u16, mode, otype, ospeed, pupd);
     }

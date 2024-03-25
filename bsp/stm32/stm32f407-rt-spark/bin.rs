@@ -28,7 +28,7 @@ fn test(_parameter:*mut ()) -> Result<(),Error>{
         if let Some(pin) = pin.as_any().downcast_mut::<DevicePin>() {
             led_yellow = pin.ops().pin_get("PF.11");
         }
-        let mut mode = DevicePinMode::init(led_yellow, 0);
+        let mut mode = DevicePinMode::init(led_yellow, PinMode::OUTPUT);
         pin.control(0, mode.to_mut());
     }
 

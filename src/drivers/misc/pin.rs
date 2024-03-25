@@ -27,9 +27,44 @@ impl From<bool> for PinState {
     }
 }
 
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub enum PinMode {
+    OUTPUT = 0,
+    INPUT,
+    InputPullup,
+    InputPulldown,
+    OutputOd,
+}
+
+impl From<PinMode> for usize {
+    fn from(value: PinMode) -> usize {
+        match value {
+            PinMode::OUTPUT => 0,
+            PinMode::INPUT => 1,
+            PinMode::InputPullup => 2,
+            PinMode::InputPulldown => 3,
+            PinMode::OutputOd => 4,
+        }
+    }
+}
+
+impl From<usize> for PinMode {
+    fn from(value: usize) -> PinMode {
+        match value {
+            0 => PinMode::OUTPUT,
+            1 => PinMode::INPUT,
+            2 => PinMode::InputPullup,
+            3 => PinMode::InputPulldown,
+            4 => PinMode::OutputOd,
+            _ => unreachable!(),
+        }
+    }
+}
+
 pub trait PinOps
 {
-    fn pin_mode(&mut self,  _pin: usize, _mode: u8);
+    fn pin_mode(&mut self,  _pin: usize, _mode: PinMode);
     fn pin_write(&mut self,  _pin: usize, _value: PinState);
     fn pin_read(&mut self,  _pin: usize) -> PinState;
     fn pin_detach_irq(&mut self,  _pin: usize);
@@ -56,7 +91,7 @@ pub struct DevicePinValue
 pub struct DevicePinMode
 {
     pin:usize,
-    mode:u8,
+    mode:PinMode,
 }
 
 impl DevicePin {
@@ -122,7 +157,7 @@ impl DevicePinValue {
 }
 
 impl DevicePinMode {
-    pub fn init(pin:usize, mode:u8) -> Self{
+    pub fn init(pin:usize, mode:PinMode) -> Self{
         DevicePinMode{pin,mode}
     }
 }
@@ -134,7 +169,7 @@ pub fn pin_get(name:&str) -> usize{
     0
 }
 
-pub fn pin_mode(pin: usize, mode: u8){
+pub fn pin_mode(pin: usize, mode: PinMode){
     if let Some(device_pin) = system!(device_list_mut()).get_mut("pin").unwrap().as_any().downcast_mut::<DevicePin>() {
         device_pin.ops().pin_mode(pin, mode);
     }
