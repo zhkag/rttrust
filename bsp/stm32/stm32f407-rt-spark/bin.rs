@@ -2,7 +2,7 @@
 #![no_std]
 #[allow(unused_imports)]
 use components;
-use kernel::{system, println};
+use kernel::println;
 #[allow(unused_imports)]
 use libcpu;
 
@@ -16,14 +16,15 @@ use kernel::Error;
 
 use components::pin::{*};
 use kernel::To;
+use kernel::derive_find;
 
 const TEST_THREAD_STACK_SIZE: usize = 10240;
 static mut TEST_THREAD_STACK: [u8; TEST_THREAD_STACK_SIZE] = [0; TEST_THREAD_STACK_SIZE];
 
 fn test(_parameter:*mut ()) -> Result<(),Error>{
     let mut led_yellow = 0;
-    let mut pin_opt = system!(device_list_mut()).get_mut("pin");
-    if let Some(ref mut pin) = pin_opt {
+    let mut pin_ops = derive_find!("pin");
+    if let Some(ref mut pin) = pin_ops {
         if let Some(pin) = pin.as_any().downcast_mut::<DevicePin>() {
             led_yellow = pin.ops().pin_get("PF.11");
         }
@@ -33,7 +34,7 @@ fn test(_parameter:*mut ()) -> Result<(),Error>{
 
     let mut value = DevicePinValue::init(led_yellow, PinState::HIGH);
     loop {
-        if let Some(ref mut pin) = pin_opt {
+        if let Some(ref mut pin) = pin_ops {
             value.set_value(PinState::HIGH);
             pin.write(0,value.to_const() ,core::mem::size_of::<DevicePinValue>());
             kernel::thread_sleep!(100)?;

@@ -101,3 +101,10 @@ impl Device {
 pub trait DeviceRegister<T> {
     fn register(&mut self, name:&str, ops:T);
 }
+
+#[macro_export]
+macro_rules! derive_find {
+    ($derive:literal) => {
+        $crate::system!(device_list_mut()).get_mut($derive)
+    };
+}

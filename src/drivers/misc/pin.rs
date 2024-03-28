@@ -163,26 +163,26 @@ impl DevicePinMode {
 }
 
 pub fn pin_get(name:&str) -> usize{
-    if let Some(device_pin) = system!(device_list_mut()).get_mut("pin").unwrap().as_any().downcast_mut::<DevicePin>() {
+    if let Some(device_pin) = crate::derive_find!("pin").unwrap().as_any().downcast_mut::<DevicePin>() {
         return device_pin.ops().pin_get(name)
     }
     0
 }
 
 pub fn pin_mode(pin: usize, mode: PinMode){
-    if let Some(device_pin) = system!(device_list_mut()).get_mut("pin").unwrap().as_any().downcast_mut::<DevicePin>() {
+    if let Some(device_pin) = crate::derive_find!("pin").unwrap().as_any().downcast_mut::<DevicePin>() {
         device_pin.ops().pin_mode(pin, mode);
     }
 }
 
 pub fn pin_write(pin: usize, value: PinState){
-    if let Some(device_pin) = system!(device_list_mut()).get_mut("pin").unwrap().as_any().downcast_mut::<DevicePin>() {
+    if let Some(device_pin) = crate::derive_find!("pin").unwrap().as_any().downcast_mut::<DevicePin>() {
         device_pin.ops().pin_write(pin, value);
     }
 }
 
 pub fn pin_read(pin: usize) -> PinState{
-    if let Some(device_pin) = system!(device_list_mut()).get_mut("pin").unwrap().as_any().downcast_mut::<DevicePin>() {
+    if let Some(device_pin) = crate::derive_find!("pin").unwrap().as_any().downcast_mut::<DevicePin>() {
         return device_pin.ops().pin_read(pin)
     }
     PinState::LOW
