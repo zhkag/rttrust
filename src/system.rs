@@ -10,7 +10,7 @@ use crate::kservice;
 use crate::components;
 use crate::libcpu::LibcpuTrait;
 use crate::mem::SmallMem;
-use crate::heaplist;
+use crate::List;
 use crate::Box;
 use crate::Vec;
 use crate::String;
@@ -31,7 +31,7 @@ static mut MAIN_THREAD_STACK: [u8; MAIN_THREAD_STACK_SIZE] = [0; MAIN_THREAD_STA
 pub struct System{
     scheduler:Option<Scheduler>,
     tick:Tick,
-    timer_list:heaplist::List<Timer>,
+    timer_list:List<Timer>,
     pub(super) object_container:[ObjectInformation; ObjectInfoType::Unknown as usize],
     interrupt:Interrupt,
     pub libcpu: Option<Box<dyn LibcpuTrait>>,
@@ -56,7 +56,7 @@ impl System {
         let systerm = Self{
             scheduler:None,
             tick:Tick::new(),
-            timer_list:heaplist::List::new(),
+            timer_list:List::new(),
             object_container:[ObjectInformation::new(); ObjectInfoType::Unknown as usize],
             interrupt:Interrupt::init(),
             libcpu:None,
@@ -108,7 +108,7 @@ impl System {
         &mut self.tick
     }
 
-    pub fn timer_list_mut(&mut self) ->&mut heaplist::List<Timer>{
+    pub fn timer_list_mut(&mut self) ->&mut List<Timer>{
         &mut self.timer_list
     }
 

@@ -1,5 +1,5 @@
 use crate::thread::{Thread,Status};
-use crate::{heaplist, thread_self_mut};
+use crate::{List, thread_self_mut};
 use crate::{thread_self, system};
 use crate::scheduler;
 use crate::interrupt_nest;
@@ -9,29 +9,29 @@ pub struct Scheduler{
     ready_priority_group:usize,
     last_thread:Option<Thread>,
     current_thread:Option<Thread>,
-    priority_table_heap:[Option<heaplist::List<Thread>>;THREAD_PRIORITY_MAX],
-    thread_timer_list:heaplist::List<Thread>,
+    priority_table_heap:[Option<List<Thread>>;THREAD_PRIORITY_MAX],
+    thread_timer_list:List<Thread>,
 }
 
 impl Scheduler {
     pub fn new() -> Self {
-        const ARRAY_REPEAT_VALUE: Option<heaplist::List<Thread>> = None;
+        const ARRAY_REPEAT_VALUE: Option<List<Thread>> = None;
         let scheduler = Self{
             ready_priority_group:0,
             last_thread:None,
             current_thread:None,
             priority_table_heap:[ARRAY_REPEAT_VALUE;THREAD_PRIORITY_MAX],
-            thread_timer_list:heaplist::List::new(),
+            thread_timer_list:List::new(),
         };
         scheduler
     }
     pub fn init(&mut self){
         for value in 0..THREAD_PRIORITY_MAX{
-            self.priority_table_heap[value] = Some(heaplist::List::new());
+            self.priority_table_heap[value] = Some(List::new());
         }
     }
 
-    pub fn thread_timer_list_mut(&mut self) ->&mut heaplist::List<Thread>{
+    pub fn thread_timer_list_mut(&mut self) ->&mut List<Thread>{
         &mut self.thread_timer_list
     }
 

@@ -16,7 +16,7 @@ pub mod include;
 mod components;
 mod to;
 mod mem;
-pub mod heaplist;
+pub mod list;
 pub extern crate alloc;
 pub use alloc::vec::Vec;
 pub use alloc::boxed::Box;
@@ -32,6 +32,7 @@ pub use to::To;
 pub extern crate macros;
 pub use macros::To;
 pub use core::any::Any;
+pub use list::List;
 
 pub use components::entry;
 use core::panic::PanicInfo;
