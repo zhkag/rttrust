@@ -265,12 +265,35 @@ impl RccTypeDef{
 use kernel::BspTrait;
 use crate::drivers::uart::hw_usart_init;
 struct Board{}
+use kernel::include::TICK_PER_SECOND;
 
 impl BspTrait for Board{
     fn init(&self){
         RccTypeDef::init().clock_init();
         SysTickType::init().systick_init();
         hw_usart_init();
+    }
+    fn us_delay(&self, us:usize) {
+        let systick =  SysTickType::init();
+        let mut tnow:u32;
+        let mut tcnt:u32 = 0;
+        let reload:u32 = systick.load;
+        let ticks:u64 = us as u64 * (reload as u64 / (1000000 / TICK_PER_SECOND as u64));
+        let mut told = systick.val;
+        loop {
+            tnow = systick.val;
+            if tnow != told {
+                if tnow < told {
+                    tcnt += told - tnow;
+                }else {
+                    tcnt += reload - tnow + told;
+                }
+                told = tnow;
+                if tcnt as u64 >= ticks {
+                    break;
+                }
+            }
+        }
     }
 }
 

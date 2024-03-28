@@ -2,6 +2,7 @@ use crate::Box;
 
 pub trait BspTrait {
     fn init(&self);
+    fn us_delay(&self, us:usize);
 }
 
 impl crate::system::System {
