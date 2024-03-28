@@ -168,4 +168,22 @@ impl Scheduler {
         system.libcpu().context_switch_to(sp);
         unreachable!();
     }
+    pub fn list_thread<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&Thread),
+    {
+        if let Some(thread) = self.current_thread {
+            f(&thread);
+        }
+        if let Some(thread) = self.last_thread {
+            f(&thread);
+        }
+        for threads in self.priority_table_heap.as_ref() {
+            if let Some(threads) = threads {
+                for thread in threads.clone().into_iter() {
+                    f(&thread);
+                }
+            }
+        }
+    }
 }

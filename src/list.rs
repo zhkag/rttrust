@@ -17,6 +17,7 @@ impl<T> Node<T> {
     }
 }
 
+#[derive(Clone)]
 pub struct List<T> {
     head: Option<Rc<RefCell<Node<T>>>>,
     tail: Option<Rc<RefCell<Node<T>>>>,
@@ -140,7 +141,7 @@ impl<T> List<T> {
     pub fn is_empty(&self) -> bool {
         self.head.is_none()
     }
-    
+
 }
 
 pub struct Iter<T> {

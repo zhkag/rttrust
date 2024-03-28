@@ -80,7 +80,11 @@ pub struct Thread
     timer_run:bool,
 }
 
-
+impl core::fmt::Display for Thread {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{}", self.parent)
+    }
+}
 
 impl Thread {
     fn new(entry: fn(*mut ()) -> Result<(),Error>, parameter:*mut (), stack_start:*mut (),
