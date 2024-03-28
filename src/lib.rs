@@ -6,7 +6,6 @@ pub mod scheduler;
 pub mod idle;
 pub mod bsp;
 pub mod thread;
-pub mod list;
 pub mod tick;
 pub mod timer;
 pub mod kservice;

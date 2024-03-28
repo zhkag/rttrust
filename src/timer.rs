@@ -2,7 +2,7 @@ use crate::system;
 use crate::system::System;
 use crate::scheduler::Scheduler;
 use crate::tick;
-use crate::list::List;
+// use crate::list::List;
 
 #[derive(PartialEq)]
 #[derive(Copy, Clone)]
@@ -12,7 +12,7 @@ pub struct Timer
     parameter: *mut (),
     init_tick:usize,
     timeout_tick:usize,
-    list:List<Self>,
+    // list:List<Self>,
     flag:u8,
 }
 
@@ -23,11 +23,11 @@ impl Timer {
             parameter,
             init_tick:time,
             timeout_tick:0,
-            list:List::new(),
+            // list:List::new(),
             flag,
         };
         *timer = Some(timer_init);
-        timer.as_mut().unwrap().list_mut().init();
+        // timer.as_mut().unwrap().list_mut().init();
         timer.as_mut().unwrap()
     }
 
@@ -46,16 +46,16 @@ impl Timer {
         self.init_tick = tick;
     }
 
-    pub fn list_mut(&mut self) -> &mut List<Self> {
-        &mut self.list
-    }
+    // pub fn list_mut(&mut self) -> &mut List<Self> {
+    //     &mut self.list
+    // }
 }
 
 impl System {
-    pub fn list_to_timer(&self, list: *mut List<Timer>) -> &mut Timer {
-        #[allow(deref_nullptr)]
-        unsafe { &mut *((list as usize - (&(&*(0 as *const Timer)).list) as *const List<Timer> as usize) as *mut Timer) }
-    }
+    // pub fn list_to_timer(&self, list: *mut List<Timer>) -> &mut Timer {
+    //     #[allow(deref_nullptr)]
+    //     unsafe { &mut *((list as usize - (&(&*(0 as *const Timer)).list) as *const List<Timer> as usize) as *mut Timer) }
+    // }
 
     pub fn timer_check(&mut self, tick:usize){
         self.scheduler_mut().thread_timer_check(tick); // 这里只处理了线程定时器，没有原生定时器

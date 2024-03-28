@@ -15,8 +15,7 @@ fn main() -> Result<(),Error>{
 
     let stack_size:u32 = core::mem::size_of::<[u8; TEST_THREAD_STACK_SIZE]>().try_into().unwrap();
     let stack_start = unsafe {TEST_THREAD_STACK.as_mut_ptr() as *mut ()};
-    let thread_static = unsafe {&mut TEST_THREAD};
-    let test_thread = thread::Thread::init(thread_static, "test", test, core::ptr::null_mut(),
+    let test_thread = thread::Thread::init( "test", test, core::ptr::null_mut(),
                                                 stack_start, stack_size, 20, 4);
     test_thread.startup();
 

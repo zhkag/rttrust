@@ -19,7 +19,6 @@ use kernel::To;
 
 const TEST_THREAD_STACK_SIZE: usize = 10240;
 static mut TEST_THREAD_STACK: [u8; TEST_THREAD_STACK_SIZE] = [0; TEST_THREAD_STACK_SIZE];
-static mut TEST_THREAD: Option<thread::Thread> = None;
 
 fn test(_parameter:*mut ()) -> Result<(),Error>{
     let mut led_yellow = 0;

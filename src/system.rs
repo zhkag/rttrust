@@ -27,7 +27,6 @@ fn main_fun(_parameter:*mut ()) -> Result<(),Error>{
 
 const MAIN_THREAD_STACK_SIZE: usize = 10240;
 static mut MAIN_THREAD_STACK: [u8; MAIN_THREAD_STACK_SIZE] = [0; MAIN_THREAD_STACK_SIZE];
-static mut MAIN_THREAD: Option<Thread> = None;
 
 pub struct System{
     scheduler:Option<Scheduler>,
@@ -72,8 +71,7 @@ impl System {
     fn main_app_init(&mut self) {
         let stack_size:u32 = core::mem::size_of::<[u8; MAIN_THREAD_STACK_SIZE]>().try_into().unwrap();
         let stack_start = unsafe {MAIN_THREAD_STACK.as_mut_ptr() as *mut ()};
-        let thread_static = unsafe {&mut *core::ptr::addr_of_mut!(MAIN_THREAD)};
-        let main_thread = Thread::init(thread_static,"main", main_fun, core::ptr::null_mut(),
+        let main_thread = Thread::init("main", main_fun, core::ptr::null_mut(),
                                                     stack_start, stack_size, 20, 32);
 
         main_thread.startup();

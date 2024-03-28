@@ -1,4 +1,3 @@
-use crate::list::List;
 use crate::system::System;
 use crate::system;
 use crate::include::NAME_MAX;
@@ -65,7 +64,6 @@ impl core::fmt::Display for ObjectClassType {
 pub struct ObjectInformation
 {
     object_class_type:ObjectClassType,
-    pub object_list:List<Object>,
     object_size:u16,
 }
 
@@ -76,7 +74,6 @@ pub struct Object
     name:[u8;NAME_MAX],
     r#type:ObjectClassType,
     flag:u8,
-    list:List<Self>,
 }
 
 impl core::fmt::Display for Object {
@@ -96,36 +93,17 @@ impl Object {
             name: [b'\0'; NAME_MAX],
             r#type: ObjectClassType::Null,
             flag: 0,
-            list: List::new(),
         };
         object
     }
     pub fn init(&mut self, r#type:ObjectClassType, name:&str) {
         self.r#type = r#type;
-        self.list.init();
         for index in 0..NAME_MAX {
             if let Some(char) = name.as_bytes().get(index){
                 self.name[index] = *char;
             }else {
                 break;
             }
-        }
-        system!(install_object(r#type,&mut self.list));
-    }
-
-    fn compare_name(&self, name:&str) -> bool{
-        let mut name_temp:[u8;NAME_MAX] = [b'\0'; NAME_MAX];
-        for index in 0..NAME_MAX {
-            if let Some(char) = name.as_bytes().get(index){
-                name_temp[index] = *char;
-            }else {
-                break;
-            }
-        }
-        if name_temp == self.name {
-            true
-        }else {
-            false
         }
     }
 }
@@ -134,32 +112,17 @@ impl ObjectInformation {
     pub fn new() -> Self {
         let information = ObjectInformation{
             object_class_type: ObjectClassType::Null,
-            object_list: List::new(),
             object_size: 0,
         };
         information
     }
     pub fn init(&mut self, r#type:ObjectClassType, size:u16){
-        self.object_list.init();
         self.object_class_type = r#type;
         self.object_size =  size;
     }
 }
 
 impl System {
-    fn install_object(&mut self, r#type:ObjectClassType, list:&mut List<Object>){
-        let libcpu = system!().libcpu();
-        let level = libcpu.interrupt_disable();
-        for index in 0..ObjectInfoType::Unknown as usize {
-            if self.object_container[index].object_class_type == r#type {
-                self.object_container[index].object_list.insert_after(list);
-                libcpu.interrupt_enable(level);
-                return;
-            }
-        }
-        libcpu.interrupt_enable(level);
-    }
-
     pub fn get_object_information(&mut self, r#type:ObjectClassType) -> Option<&mut ObjectInformation>{
         let libcpu = system!().libcpu();
         let level = libcpu.interrupt_disable();
@@ -171,23 +134,6 @@ impl System {
         }
         libcpu.interrupt_enable(level);
         None
-    }
-
-    pub fn object_find(&mut self, name:&str, r#type:ObjectClassType) -> Option<&mut Object>{
-        if let Some(information) = self.get_object_information(r#type){
-            for node in information.object_list.iter_mut() {
-                let object = self.list_to_object(node);
-                if  object.compare_name(name) {
-                    return Some(object);
-                }
-            }
-        }
-        None
-    }
-
-    pub fn list_to_object(&self, list: *mut List<Object>) -> &mut Object {
-        #[allow(deref_nullptr)]
-        unsafe { &mut *((list as usize - (&(&*(0 as *const Object)).list) as *const List<Object> as usize) as *mut Object) }
     }
 }
 

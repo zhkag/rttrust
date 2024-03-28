@@ -142,20 +142,18 @@ impl Thread {
         }
         schedule!();
     }
-    pub fn init<'a>(thread: &'a mut Option<Self>, name:&'a str, entry: fn(*mut ()) -> Result<(),Error>, parameter:*mut (),
-                stack_start:*mut (), stack_size:u32, priority:u8, tick:u8) -> &'a mut Self{
-        *thread = Some(Self::new(entry, parameter, stack_start, stack_size, priority, tick));
-        let thread_mut = thread.as_mut().unwrap();
-        thread_mut.parent.init(crate::object::ObjectClassType::Thread, name);
-
+    pub fn init<'a>(name:&'a str, entry: fn(*mut ()) -> Result<(),Error>, parameter:*mut (),
+                stack_start:*mut (), stack_size:u32, priority:u8, tick:u8) -> Self{
+        let mut thread = Self::new(entry, parameter, stack_start, stack_size, priority, tick);
+        thread.parent.init(crate::object::ObjectClassType::Thread, name);
         let libcpu = system!().libcpu();
-        let ptr = thread_mut.stack_addr as u32;
-        thread_mut.sp = libcpu.stack_init(thread_mut.entry, thread_mut.parameter,
-                             (ptr+thread_mut.stack_size-16)as *mut (), Self::thread_exit);
+        let ptr = thread.stack_addr as u32;
+        thread.sp = libcpu.stack_init(thread.entry, thread.parameter,
+                             (ptr + thread.stack_size-16)as *mut (), Self::thread_exit);
 
-        let timer_parameter = thread_mut.as_mut_ptr() as *mut ();
-        Timer::init(&mut thread_mut.thread_timer, Self::thread_timeout, timer_parameter, 0, 0);
-        thread_mut
+        let timer_parameter = thread.as_mut_ptr() as *mut ();
+        Timer::init(&mut thread.thread_timer, Self::thread_timeout, timer_parameter, 0, 0);
+        thread
     }
 
     fn suspend_with_flag(&mut self, suspend_flag:SuspendWithFlag) -> Result<(),Error>{
@@ -208,14 +206,14 @@ impl Thread {
         self.number_mask
     }
 
-    fn resume(&mut self){
+    fn resume(self){
         if (self.stat & Status::SuspendMask as u8) != Status::SuspendMask as u8{
             return;
         }
-        scheduler!(insert_thread(*self));
+        scheduler!(insert_thread(self));
     }
 
-    pub fn startup(&mut self){
+    pub fn startup(mut self){
         self.stat = Status::SUSPEND as u8;
         self.resume();
         if thread_self!().is_some(){
