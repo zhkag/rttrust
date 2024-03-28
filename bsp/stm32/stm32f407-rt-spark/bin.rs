@@ -2,7 +2,7 @@
 #![no_std]
 #[allow(unused_imports)]
 use components;
-use kernel::system;
+use kernel::{system, println};
 #[allow(unused_imports)]
 use libcpu;
 
@@ -42,6 +42,7 @@ fn test(_parameter:*mut ()) -> Result<(),Error>{
             pin.write(0,value.to_const() ,core::mem::size_of::<DevicePinValue>());
             kernel::thread_sleep!(100)?;
         }
+        println!("test thread!");
     }
 }
 

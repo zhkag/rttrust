@@ -1,5 +1,6 @@
 use crate::{*};
 use components::pin::*;
+use kernel::println;
 #[export_name = "HardFault_Handler"]
 unsafe extern "C" fn hard_fault_handler() {
 
@@ -27,6 +28,7 @@ fn main() -> Result<(),Error>{
         kernel::thread_sleep!(500)?;
         pin_write(led_red, PinState::LOW);
         kernel::thread_sleep!(500)?;
+        println!("main thread!");
     }
 }
 
