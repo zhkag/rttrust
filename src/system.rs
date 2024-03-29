@@ -1,3 +1,4 @@
+use crate::drivers::serial::uart::DeviceUart;
 use crate::object::{ObjectInformation,ObjectClassType,ObjectInfoType};
 use crate::{Error, To};
 use crate::scheduler::Scheduler;
@@ -139,15 +140,20 @@ impl System {
     }
     pub fn puts(&mut self,  s: &str){
         if let Some(console) = self.console_device(){
-            console.write(0, s.to_const(), s.len());
+            if let Some(uart) =  console.as_any().downcast_mut::<DeviceUart>(){
+                for c in s.chars(){
+                    uart.ops().putc(c);
+                }
+            };
         }
     }
-    pub fn getc(&mut self) -> u8{
-        let mut c:char = ' ';
+    pub fn getc(&mut self) -> Option<u8>{
         if let Some(console) = self.console_device(){
-            console.read(0, (&mut c).to_mut(), 1);
+            if let Some(uart) =  console.as_any().downcast_mut::<DeviceUart>(){
+                return uart.ops().getc();
+            };
         }
-        return c as u8;
+        None
     }
 
 }

@@ -22,7 +22,7 @@ pub trait UartOps
     fn configure(&mut self,  _cfg: &mut SerialConfigure);
     fn control(&mut self,  _cmd: usize, args: Option<*mut ()>);
     fn putc(&mut self,  _c: char);
-    fn getc(&mut self) -> u8;
+    fn getc(&mut self) -> Option<u8>;
     // fn dma_transmit(&mut self);
 }
 

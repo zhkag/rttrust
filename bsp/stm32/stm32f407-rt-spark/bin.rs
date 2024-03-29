@@ -43,7 +43,7 @@ fn test(_parameter:*mut ()) -> Result<(),Error>{
             pin.write(0,value.to_const() ,core::mem::size_of::<DevicePinValue>());
             kernel::thread_sleep!(100)?;
         }
-        println!("test thread!");
+        // println!("test thread!");
     }
 }
 

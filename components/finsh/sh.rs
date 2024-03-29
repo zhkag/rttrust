@@ -44,7 +44,25 @@ fn sh_get_cmd(cmd:&str) -> Option<&ShSyscall> {
 }
 
 
+const SH_THREAD_STACK_SIZE: usize = 10240;
+static mut SH_THREAD_STACK: [u8; SH_THREAD_STACK_SIZE] = [0; SH_THREAD_STACK_SIZE];
+
+fn sh_fun(_parameter:*mut ()) -> Result<(),Error>{
+    loop {
+        // thread_sleep!(10)?;
+        // println!("sh thread!");
+        if let Some(c) = system!(getc()) {
+            kernel::print!("{}",char::from_u32(c as u32).unwrap());
+        }
+    }
+    Ok(())
+}
+
 use kernel::macros::init_export;
+use kernel::system;
+use kernel::thread::Thread;
+use kernel::thread_sleep;
+use kernel::Error;
 #[init_export("6")]
 fn sh_test(){
     sh_help();
@@ -53,4 +71,10 @@ fn sh_test(){
         println!("test.desc {}",test.desc);
         (test.func)();
     }
+
+    let stack_size:u32 = core::mem::size_of::<[u8; SH_THREAD_STACK_SIZE]>().try_into().unwrap();
+    let stack_start = unsafe {SH_THREAD_STACK.as_mut_ptr() as *mut ()};
+    let sh_thread = Thread::init("sh", sh_fun, core::ptr::null_mut(),
+                                                stack_start, stack_size, 23, 32);
+    sh_thread.startup();
 }

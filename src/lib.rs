@@ -22,6 +22,7 @@ pub use alloc::vec::Vec;
 pub use alloc::boxed::Box;
 pub use alloc::string::String;
 pub use alloc::collections::BTreeMap;
+pub use alloc::collections::VecDeque;
 
 pub use core::result::Result as Result;
 

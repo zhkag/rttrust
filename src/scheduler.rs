@@ -31,16 +31,22 @@ impl Scheduler {
         }
     }
 
-    pub fn thread_timer_list_mut(&mut self) ->&mut List<Thread>{
-        &mut self.thread_timer_list
+    // pub fn thread_timer_list_mut(&mut self) ->&mut List<Thread>{
+    //     &mut self.thread_timer_list
+    // }
+
+    pub fn thread_timer_list_mut(&mut self) ->Option<crate::irq::InterruptGuard<'_, List<Thread>>>{
+        Some(crate::irq::InterruptGuard::new(&mut self.thread_timer_list))
     }
 
     pub fn solve_last_thread(&mut self){
         if let Some(thread) = self.last_thread {
             self.last_thread = None;
             if thread.timer_run(){
-                self.thread_timer_list.insert_with_cmp(thread, |a, b|
-                    a.timeout_tick() < b.timeout_tick());
+                if let Some(mut list) = self.thread_timer_list_mut() {
+                    list.data().insert_with_cmp(thread, |a, b|
+                        a.timeout_tick() < b.timeout_tick());
+                }
             }
             else {
                 self.insert_thread(thread);

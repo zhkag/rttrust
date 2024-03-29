@@ -1,4 +1,4 @@
-use crate::system;
+use crate::{println, system};
 use crate::system::System;
 use crate::scheduler::Scheduler;
 use crate::tick;
@@ -51,13 +51,19 @@ impl System {
 
 impl Scheduler {
     pub fn thread_timer_check(&mut self, tick:usize){
-        let list = self.thread_timer_list_mut();
-        list.pop_with_cmp(&tick,
-            |tick, b| *tick > b.thread_timer_mut().timeout_tick,
-            |mut thread| {
-                let timer_parameter = &mut thread as *mut crate::thread::Thread as *mut ();
-                (thread.thread_timer_mut().timeout_func)(timer_parameter)
+        if let Some(mut list) = self.thread_timer_list_mut() {
+            let data = list.data();
+            if data.len() == 0{
+                return;
             }
-        );
+            // println!("data.len() {}",data.len());
+            data.pop_with_cmp(&tick,
+                |tick, b| *tick > b.thread_timer_mut().timeout_tick,
+                |mut thread| {
+                    let timer_parameter = &mut thread as *mut crate::thread::Thread as *mut ();
+                    (thread.thread_timer_mut().timeout_func)(timer_parameter)
+                }
+            );
+        }
     }
 }

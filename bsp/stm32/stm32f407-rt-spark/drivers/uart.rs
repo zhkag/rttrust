@@ -15,12 +15,8 @@ impl UartOps for StmUart<'_> {
     fn putc(&mut self,  c: char){
         self.uart.putc(c);
     }
-    fn getc(&mut self) -> u8{
-        let mut c = self.uart.getc();
-        while c.is_none() {
-            c = self.uart.getc()
-        }
-        return c.unwrap() as u8;
+    fn getc(&mut self) -> Option<u8>{
+        self.uart.getc()
     }
 }
 
@@ -55,11 +51,8 @@ impl UsartTypeDef{
         self.dr = ch as u32;
         while (self.sr & 0x40) == 0{}     /* 等待字符发送完成 */
     }
-    pub fn getc(&mut self) -> Option<char>{
-        if self.sr & (1 << 5) != 0 {
-            return char::from_u32(self.dr)
-        }
-        None
+    pub fn getc(&mut self) -> Option<u8>{
+        unsafe {crate::drivers::uart::UART_QUEUE.pop_front()}
     }
     pub fn usart_init(&mut self){
         let rcc = RccTypeDef::init();
@@ -94,10 +87,14 @@ impl UsartTypeDef{
     }
 }
 
+
+use kernel::VecDeque;
+pub static mut UART_QUEUE:VecDeque<u8> = VecDeque::new();
+
 #[export_name = "USART1_IRQHandler"]
 unsafe extern "C" fn usart1_irqhandler() {
     let usart1 = UsartTypeDef::init();
     if usart1.sr & (1 << 5) != 0 {
-        usart1.putc(char::from_u32(usart1.dr).unwrap());
+        UART_QUEUE.push_back(usart1.dr as u8);
     }
 }

@@ -40,6 +40,17 @@ macro_rules! println {
 }
 
 #[macro_export]
+macro_rules! print {
+    ($($arg:tt)*) => {
+        {
+            use core::fmt::Write;
+            let mut usart_writer = $crate::kservice::UsartWriter {};
+            let _ = write!(usart_writer, $($arg)*);
+        }
+    };
+}
+
+#[macro_export]
 macro_rules! align {
     ($size:expr, $align:expr) => {
         (($size) + ($align) - 1) & !($align - 1)
